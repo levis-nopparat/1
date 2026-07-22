@@ -3,925 +3,920 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบเช็คชื่อพนักงาน V4 (Sync CSV)</title>
-    <!-- Tailwind CSS สำหรับจัดการ UI -->
+    <title>Friendly Restaurant</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome สำหรับไอคอน -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SweetAlert2 สำหรับหน้าต่าง Popup แจ้งเตือน -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* ฟอนต์ภาษาไทย Prompt */
-        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Kanit', sans-serif; }
+        .input-field {
+            width: 100%; border: 1px solid #d1d5db; border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem; transition: all 0.2s;
+        }
+        .input-field:focus {
+            outline: none; border-color: #ef4444; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+        }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* Smooth scrolling */
+        html { scroll-behavior: smooth; }
         
-        body {
-            font-family: 'Prompt', sans-serif;
-            background-color: #0f172a; /* พื้นหลังสีเข้ม */
-            color: #e2e8f0;
+        /* Hide Scrollbar but keep functionality */
+        .hide-scroll-bar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
         }
-
-        /* ตกแต่ง Scrollbar ให้ดูสวยงามเข้ากับธีม */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-
-        /* สไตล์ป้ายกำกับ (Badge) สวยงาม โค้งมน มีกรอบ */
-        .custom-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            font-size: 0.85rem;
-            min-width: 2.5rem;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        /* ซ่อนไอคอนปฏิทินของ input type date แบบเดิม */
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-            cursor: pointer;
+        .hide-scroll-bar::-webkit-scrollbar {
+            display: none; /* Chrome, Safari and Opera */
         }
     </style>
 </head>
-<body class="min-h-screen p-2 md:p-4">
+<body class="bg-gray-50 text-gray-800">
 
-    <!-- STREAMING_CHUNK: โครงสร้าง Header และเมนูหลัก -->
-    <div class="max-w-[1400px] mx-auto flex flex-col h-[95vh]">
-        
-        <!-- ================= HEADER (ส่วนหัว) ================= -->
-        <header class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4 bg-slate-800/80 p-4 rounded-2xl border border-slate-700 shadow-lg">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(37,99,235,0.4)]">
-                    <i class="fa-solid fa-users text-2xl text-white"></i>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-bold text-white tracking-wide">ระบบเช็คชื่อพนักงาน</h1>
-                    <!-- ระบบเลือกวันที่ (สามารถค้นหาย้อนหลังได้) -->
-                    <div class="flex items-center gap-2 mt-1 bg-slate-900 px-3 py-1 rounded-lg border border-slate-700 cursor-pointer hover:bg-slate-700 transition" onclick="document.getElementById('datePicker').showPicker()">
-                        <i class="fa-solid fa-calendar-days text-blue-400"></i>
-                        <input type="date" id="datePicker" class="bg-transparent text-sm text-slate-300 outline-none cursor-pointer" onchange="changeDate(this.value)">
+    <!-- ========================================== -->
+    <!-- VIEW: FRONTEND -->
+    <!-- ========================================== -->
+    <div id="frontend-view" class="min-h-screen">
+        <!-- Navigation -->
+        <nav class="bg-white shadow-md fixed w-full z-50 transition-all duration-300">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-20">
+                    <div class="flex items-center">
+                        <img id="nav-logo" src="" alt="Logo" class="h-12 w-12 object-cover rounded-full mr-3 border-2 border-red-100 hidden" onerror="this.style.display='none'" />
+                        <i id="nav-logo-icon" data-lucide="chef-hat" class="h-10 w-10 text-red-600 mr-2"></i>
+                        <span class="font-bold text-xl md:text-2xl text-gray-900 tracking-tight">
+                            Friendly <span class="text-red-600 hidden sm:inline">Restaurant</span>
+                        </span>
+                    </div>
+                    
+                    <!-- Desktop Menu -->
+                    <div class="hidden md:flex items-center space-x-6">
+                        <a href="#home" class="text-gray-600 hover:text-red-600 font-medium">หน้าแรก</a>
+                        <a href="#promotions-section" class="text-gray-600 hover:text-red-600 font-medium">โปรโมชั่น</a>
+                        <a href="#menu" class="text-gray-600 hover:text-red-600 font-medium">เมนูอาหาร</a>
+                        <a href="#atmosphere" class="text-gray-600 hover:text-red-600 font-medium">บรรยากาศ</a>
+                        <a href="#contact" class="px-4 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 font-medium transition shadow-md">ติดต่อเรา</a>
+                    </div>
+
+                    <!-- Mobile Menu Button -->
+                    <div class="md:hidden flex items-center">
+                        <button onclick="toggleMobileMenu()" class="text-gray-600 hover:text-red-600">
+                            <i data-lucide="menu" id="mobile-menu-icon" class="w-7 h-7"></i>
+                        </button>
                     </div>
                 </div>
             </div>
-
-            <!-- โซน Login, Sync Data และ ข้อมูล User -->
-            <div class="flex items-center gap-3">
-                <!-- ปุ่มเชื่อมโยงข้อมูล CSV (เห็นเฉพาะตอน Login) -->
-                <button id="btnSyncCSV" onclick="openSyncModal()" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl transition shadow-lg flex items-center gap-2 font-medium">
-                    <i class="fa-solid fa-file-csv"></i> Sync Data (CSV)
-                </button>
-
-                <span id="userInfo" class="hidden px-4 py-2 bg-slate-900 border border-slate-700 text-slate-300 rounded-xl text-sm flex items-center gap-2"></span>
-                
-                <button id="btnLogin" onclick="promptLogin()" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center gap-2 font-medium">
-                    <i class="fa-solid fa-lock"></i> เข้าสู่ระบบ
-                </button>
-                <button id="btnLogout" onclick="logout()" class="hidden bg-red-600 hover:bg-red-500 text-white px-5 py-2.5 rounded-xl transition shadow-lg shadow-red-500/20 flex items-center gap-2 font-medium">
-                    <i class="fa-solid fa-sign-out-alt"></i> ออกจากระบบ
-                </button>
+            
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="hidden md:hidden bg-white border-t shadow-lg absolute w-full">
+                <div class="px-4 pt-2 pb-6 space-y-2">
+                    <a href="#home" onclick="toggleMobileMenu()" class="block py-3 border-b text-gray-700 font-medium">หน้าแรก</a>
+                    <a href="#promotions-section" onclick="toggleMobileMenu()" class="block py-3 border-b text-gray-700 font-medium">โปรโมชั่น</a>
+                    <a href="#menu" onclick="toggleMobileMenu()" class="block py-3 border-b text-gray-700 font-medium">เมนูอาหาร</a>
+                    <a href="#atmosphere" onclick="toggleMobileMenu()" class="block py-3 border-b text-gray-700 font-medium">บรรยากาศภายในร้าน</a>
+                    <a href="#contact" onclick="toggleMobileMenu()" class="block py-3 text-red-600 font-bold">ติดต่อเรา</a>
+                </div>
             </div>
-        </header>
+        </nav>
 
-        <!-- STREAMING_CHUNK: เมนู Navigation -->
-        <!-- ================= MENU TABS (แท็บเมนู) ================= -->
-        <div class="flex gap-2 mb-4 border-b border-slate-700 pb-4 overflow-x-auto" id="mainMenu">
-            <!-- ทุกคนเห็นหน้าเช็คชื่อ -->
-            <button onclick="switchView('attendance')" id="tab-attendance" class="px-6 py-2 rounded-xl font-medium transition bg-blue-600 text-white shadow-lg whitespace-nowrap">
-                <i class="fa-solid fa-clipboard-check mr-2"></i> หน้าเช็คชื่อ
-            </button>
-            <!-- เฉพาะ Admin และ Sup (หัวหน้างาน) ดูได้ -->
-            <button onclick="switchView('employees')" id="tab-employees" class="hidden px-6 py-2 rounded-xl font-medium transition bg-slate-800 text-slate-400 hover:bg-slate-700 whitespace-nowrap">
-                <i class="fa-solid fa-users-gear mr-2"></i> จัดการพนักงาน
-            </button>
-            <!-- เฉพาะ Admin ดูได้ -->
-            <button onclick="switchView('logs')" id="tab-logs" class="hidden px-6 py-2 rounded-xl font-medium transition bg-slate-800 text-slate-400 hover:bg-slate-700 whitespace-nowrap">
-                <i class="fa-solid fa-clock-rotate-left mr-2"></i> ประวัติการเช็คชื่อ
-            </button>
-            <button onclick="switchView('settings')" id="tab-settings" class="hidden px-6 py-2 rounded-xl font-medium transition bg-slate-800 text-slate-400 hover:bg-slate-700 whitespace-nowrap">
-                <i class="fa-solid fa-gear mr-2"></i> ตั้งค่าระบบ
-            </button>
+        <!-- Hero Section -->
+        <div id="home" class="relative pt-20">
+            <div class="absolute inset-0 z-0 h-[70vh] min-h-[500px]">
+                <img id="hero-img" src="" alt="Restaurant cover" class="w-full h-full object-cover" />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/30"></div>
+            </div>
+            <div class="relative z-10 h-[70vh] min-h-[500px] flex flex-col justify-center items-center text-center px-4">
+                <h1 id="hero-title" class="text-4xl md:text-6xl font-bold text-white mb-6 drop-shadow-xl"></h1>
+                <p id="hero-subtitle" class="text-xl md:text-2xl text-gray-200 mb-10 max-w-2xl drop-shadow-md"></p>
+                <div class="flex space-x-4">
+                    <a href="#menu" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full transition transform hover:scale-105 shadow-lg">ดูเมนูของเรา</a>
+                    <a href="#contact" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white border border-white/50 font-bold py-3 px-8 rounded-full transition shadow-lg">ข้อมูลติดต่อ</a>
+                </div>
+            </div>
         </div>
 
-        <!-- ================= CONTENT VIEWS (พื้นที่แสดงเนื้อหา) ================= -->
-        <div class="flex-1 overflow-hidden flex flex-col relative">
-
-            <!-- 1. หน้าเช็คชื่อ (Attendance) -->
-            <div id="view-attendance" class="flex-1 flex flex-col h-full w-full">
-                <!-- แท็บเลือกร้าน/คลับ -->
-                <div class="flex gap-2 mb-4 overflow-x-auto" id="clubTabsContainer"></div>
+        <!-- Promotions Section (New) -->
+        <div id="promotions-section" class="py-16 bg-white hidden">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-3xl font-bold text-gray-900 flex items-center">
+                        <i data-lucide="ticket" class="w-8 h-8 mr-3 text-red-600"></i> โปรโมชั่นพิเศษ
+                    </h2>
+                </div>
                 
-                <div class="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden shadow-xl flex-1 flex flex-col relative">
-                    <div class="overflow-auto flex-1">
-                        <table class="w-full text-sm text-left whitespace-nowrap">
-                            <thead class="bg-slate-900 text-slate-400 uppercase font-medium text-xs sticky top-0 z-10 shadow-md">
-                                <tr id="tableHeader">
-                                    <!-- สร้าง Header ผ่าน Javascript -->
-                                </tr>
-                            </thead>
-                            <tbody id="tableBody" class="divide-y divide-slate-700/50">
-                                <!-- สร้าง Body ผ่าน Javascript -->
-                            </tbody>
-                        </table>
-                    </div>
-                    <!-- ข้อความแสดงเมื่อไม่มีพนักงาน -->
-                    <div id="emptyState" class="hidden absolute inset-0 bg-slate-800/90 flex flex-col items-center justify-center text-slate-400 z-20">
-                        <i class="fa-solid fa-folder-open text-6xl mb-4 opacity-50"></i>
-                        <p class="text-xl font-medium">ไม่มีรายชื่อพนักงานในสาขานี้</p>
+                <!-- Carousel Container -->
+                <div class="relative w-full">
+                    <div id="promo-track" class="flex overflow-x-auto snap-x snap-mandatory hide-scroll-bar gap-4 pb-4 cursor-grab active:cursor-grabbing">
+                        <!-- Promotion items will be injected here -->
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- STREAMING_CHUNK: หน้าจัดการพนักงาน และ หน้า Log -->
-            <!-- 2. หน้าจัดการพนักงาน (Employees - หลังบ้านหัวหน้างาน/แอดมิน) -->
-            <div id="view-employees" class="hidden flex-1 flex flex-col h-full w-full bg-slate-800 border border-slate-700 rounded-2xl p-4">
-                <div class="flex flex-col md:flex-row justify-between gap-4 mb-6">
-                    <h2 class="text-xl font-bold"><i class="fa-solid fa-users-gear text-blue-400 mr-2"></i>จัดการพนักงานรายสาขา</h2>
-                    <div class="flex gap-2 w-full md:w-auto">
-                        <button onclick="addEmployee()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl whitespace-nowrap"><i class="fa-solid fa-plus"></i> เพิ่มพนักงาน</button>
+        <!-- Menu Section -->
+        <div id="menu" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-gray-50">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">เมนูอาหาร</h2>
+                <div class="w-24 h-1 bg-red-600 mx-auto rounded-full"></div>
+            </div>
+            <div id="menu-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"></div>
+        </div>
+
+        <!-- Atmosphere Section -->
+        <div id="atmosphere" class="bg-white py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">บรรยากาศภายในร้าน</h2>
+                    <div class="w-24 h-1 bg-red-600 mx-auto rounded-full"></div>
+                </div>
+                <div id="atmosphere-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </div>
+        </div>
+
+        <!-- Notice Board Section (Moved to Bottom) -->
+        <div id="notice-container" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-20 hidden">
+            <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                <div class="bg-amber-400 text-amber-900 px-6 py-4 flex items-center font-bold text-lg">
+                    <i data-lucide="megaphone" class="mr-2 h-6 w-6"></i> บอร์ดประกาศจากทางร้าน
+                </div>
+                <div id="notice-list" class="p-2"></div>
+            </div>
+        </div>
+
+        <!-- Footer / Contact -->
+        <footer id="contact" class="bg-gray-900 text-white pt-16 pb-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
+                    <div>
+                        <div class="flex items-center mb-4">
+                            <img id="footer-logo" src="" alt="Logo" class="h-10 w-10 object-cover rounded-full mr-3 border border-gray-700 bg-white hidden" onerror="this.style.display='none'" />
+                            <i id="footer-logo-icon" data-lucide="chef-hat" class="h-8 w-8 text-red-500 mr-2"></i>
+                            <span class="font-bold text-2xl tracking-tight"><span class="text-red-500">Friendly</span> Restaurant</span>
+                        </div>
+                        <p id="footer-subtitle" class="text-gray-400 mb-6"></p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold mb-4 text-white border-b border-gray-700 pb-2">ติดต่อเรา</h3>
+                        <ul class="space-y-4 text-gray-300">
+                            <li>
+                                <a id="contact-address-link" href="#" target="_blank" class="flex items-start hover:text-red-400 transition group">
+                                    <i data-lucide="map-pin" class="h-5 w-5 mr-3 text-red-500 shrink-0 mt-0.5 group-hover:scale-110 transition-transform"></i> 
+                                    <span id="contact-address-text"></span>
+                                </a>
+                            </li>
+                            <li class="flex items-center">
+                                <i data-lucide="phone" class="h-5 w-5 mr-3 text-red-500"></i> 
+                                <a id="contact-phone" href="#" class="hover:text-red-400 transition"></a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold mb-4 text-white border-b border-gray-700 pb-2">ติดตามเรา</h3>
+                        <div class="flex flex-col space-y-4 pt-2">
+                            <!-- Official Facebook Icon -->
+                            <a id="contact-facebook" href="#" target="_blank" class="flex items-center text-gray-300 hover:text-white transition group">
+                                <div class="bg-white p-2.5 rounded-lg group-hover:bg-blue-50 transition mr-4 shadow-sm">
+                                    <svg class="w-6 h-6 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" /></svg>
+                                </div>
+                                <span class="font-medium">Facebook : Friendly Restaurant</span>
+                            </a>
+                            <!-- Official LINE Icon -->
+                            <a id="contact-line" href="#" target="_blank" class="flex items-center text-gray-300 hover:text-white transition group">
+                                <div class="bg-[#00B900] p-2.5 rounded-lg group-hover:bg-[#00a000] transition mr-4 shadow-sm text-white">
+                                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.036 9.608.391.084.922.258 1.057.592.122.303.079.778.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.647 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.572-3.843 2.572-5.992zm-18.988-2.595h2.608c.253 0 .458.205.458.458v.918c0 .253-.205.458-.458.458h-1.69v1.69h1.69c.253 0 .458.205.458.458v.917c0 .253-.205.458-.458.458H5.012c-.253 0-.458-.205-.458-.458v-4.444c0-.253.205-.457.458-.457zm6.837 4.903c0 .253-.205.458-.458.458h-2.608c-.253 0-.458-.205-.458-.458v-4.444c0-.253.205-.457.458-.457h2.608c.253 0 .458.205.458.458v.918c0 .253-.205.458-.458.458h-1.69v.842h1.69c.253 0 .458.205.458.458v.917zm2.464 0c0 .253-.205.458-.458.458h-.917c-.253 0-.458-.205-.458-.458v-4.444c0-.253.205-.457.458-.457h.917c.253 0 .458.205.458.458v4.444zm6.059 0c0 .253-.205.458-.458.458h-2.608c-.253 0-.458-.205-.458-.458v-4.444c0-.253.205-.457.458-.457h2.608c.253 0 .458.205.458.458v.918c0 .253-.205.458-.458.458h-1.69v.842h1.69c.253 0 .458.205.458.458v.917z"/></svg>
+                                </div>
+                                <span class="font-medium">Line Official</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
-                <div class="overflow-auto flex-1" id="employeeListContainer">
-                    <!-- รายชื่อแยกตามร้านจะแสดงที่นี่ -->
+                <div class="border-t border-gray-800 pt-8 text-center text-gray-500 text-sm">
+                    <p>Copyright © 2026 <span class="cursor-pointer hover:text-white transition inline-block px-2" onclick="showPinModal()">Friendly Group</span>. All rights reserved.</p>
                 </div>
             </div>
+        </footer>
+    </div>
 
-            <!-- 3. หน้าประวัติการเช็คชื่อ (Audit Logs - เฉพาะ Admin) -->
-            <div id="view-logs" class="hidden flex-1 flex flex-col h-full w-full bg-slate-800 border border-slate-700 rounded-2xl p-4">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-bold"><i class="fa-solid fa-list-check text-blue-400 mr-2"></i>ประวัติการทำรายการ (เฉพาะวันที่เลือก)</h2>
+    <!-- ========================================== -->
+    <!-- PIN MODAL -->
+    <!-- ========================================== -->
+    <div id="pin-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] px-4 hidden">
+        <div class="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl relative fade-in">
+            <button onclick="hidePinModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 bg-gray-100 rounded-full p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <div class="text-center mb-6">
+                <div class="bg-red-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100">
+                    <i data-lucide="lock" class="h-8 w-8 text-red-600"></i>
                 </div>
-                <div class="overflow-auto flex-1 border border-slate-700 rounded-xl">
-                    <table class="w-full text-sm text-left">
-                        <thead class="bg-slate-900 text-slate-400 sticky top-0">
-                            <tr>
-                                <th class="px-4 py-3">เวลา (Log)</th>
-                                <th class="px-4 py-3">หัวหน้างานที่ตรวจ</th>
-                                <th class="px-4 py-3">แอคชั่น</th>
-                                <th class="px-4 py-3">รายละเอียด (สาขา / พนักงาน / สถานะ)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="logListBody" class="divide-y divide-slate-700"></tbody>
-                    </table>
-                </div>
+                <h3 class="text-2xl font-bold text-gray-900">Admin Login</h3>
+                <p class="text-gray-500 text-sm mt-1">กรุณาใส่รหัส PIN เพื่อจัดการร้าน</p>
             </div>
-
-            <!-- STREAMING_CHUNK: หน้าตั้งค่าระบบ -->
-            <!-- 4. หน้าตั้งค่าระบบ (Settings - เฉพาะ Admin) -->
-            <div id="view-settings" class="hidden flex-1 h-full w-full bg-slate-800 border border-slate-700 rounded-2xl p-6 overflow-y-auto">
-                <h2 class="text-2xl font-bold mb-6 text-white"><i class="fa-solid fa-sliders text-blue-400 mr-2"></i>ตั้งค่าระบบส่วนกลาง (Admin Only)</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    
-                    <!-- ตั้งค่าหัวหน้างาน (สำหรับ Login) -->
-                    <div class="bg-slate-900 border border-slate-700 rounded-xl p-5">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-bold text-yellow-400">หัวหน้างาน (Sup)</h3>
-                            <button onclick="addSupervisor()" class="text-sm bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded-lg"><i class="fa-solid fa-plus"></i></button>
-                        </div>
-                        <p class="text-[10px] text-slate-400 mb-2">กำหนดรหัส 6 หลักให้หัวหน้างานล็อกอิน</p>
-                        <div id="supervisorList" class="space-y-2"></div>
-                    </div>
-
-                    <!-- ตั้งค่าป้าย Tag -->
-                    <div class="bg-slate-900 border border-slate-700 rounded-xl p-5">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-bold text-purple-400">ช่องป้าย Tag</h3>
-                            <button onclick="addTagConfig()" class="text-sm bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded-lg"><i class="fa-solid fa-plus"></i></button>
-                        </div>
-                        <div id="tagConfigList" class="space-y-3"></div>
-                    </div>
-
-                    <!-- ตั้งค่าสถานะการเช็คชื่อ -->
-                    <div class="bg-slate-900 border border-slate-700 rounded-xl p-5">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-bold text-emerald-400">สถานะเช็คชื่อ</h3>
-                            <button onclick="addCheckState()" class="text-sm bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded-lg"><i class="fa-solid fa-plus"></i></button>
-                        </div>
-                        <div id="checkStateList" class="space-y-3"></div>
-                    </div>
-
-                    <!-- ตั้งค่าสาขาและเวลา -->
-                    <div class="bg-slate-900 border border-slate-700 rounded-xl p-5">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-bold text-blue-400">สาขา (Clubs)</h3>
-                            <button onclick="addClub()" class="text-sm bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded-lg"><i class="fa-solid fa-plus"></i></button>
-                        </div>
-                        <div id="clubConfigList" class="space-y-4"></div>
-                    </div>
-
+            <form onsubmit="handleLogin(event)">
+                <div class="mb-6">
+                    <input type="password" id="pin-input" maxlength="6" placeholder="รหัส PIN 6 หลัก" class="w-full text-center text-3xl tracking-widest border-2 border-gray-200 rounded-xl px-4 py-4 focus:outline-none focus:border-red-500 focus:ring-4 focus:ring-red-100 transition shadow-inner font-mono" autofocus />
+                    <p id="pin-error" class="text-red-500 text-sm text-center mt-2 font-medium hidden">รหัส PIN ไม่ถูกต้อง</p>
                 </div>
-            </div>
-
+                <button type="submit" id="btn-login" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl transition shadow-lg flex items-center justify-center">
+                    เข้าสู่ระบบ
+                </button>
+            </form>
         </div>
     </div>
 
-    <!-- STREAMING_CHUNK: การตั้งค่า Default Data -->
-    <!-- ================= JAVASCRIPT ================= -->
-    <script>
-        // --- 1. ข้อมูลเริ่มต้น (Defaults) ---
-        const DEFAULT_CLUBS = [
-            { id: 'c1', name: 'FRIENDLY CLUB', times: ['00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00', '07:00'] },
-            { id: 'c2', name: 'FC CLUB', times: ['23:20', '00:20', '01:20', '02:20', '03:20', '04:20', '05:20', '06:20'] },
-            { id: 'c3', name: 'CF MAN CLUB', times: ['23:40', '00:40', '01:40', '02:40', '03:40', '04:40', '05:40', '06:40'] }
-        ];
+    <!-- ========================================== -->
+    <!-- VIEW: ADMIN BACKEND -->
+    <!-- ========================================== -->
+    <div id="admin-view" class="min-h-screen bg-gray-50 font-sans flex flex-col md:flex-row hidden">
+        <!-- Admin Sidebar -->
+        <div class="w-full md:w-64 bg-gray-900 text-white shrink-0 shadow-xl flex flex-col md:min-h-screen z-10 sticky top-0">
+            <div class="p-6 flex items-center border-b border-gray-800">
+                <i data-lucide="lock" class="text-red-500 mr-3 w-6 h-6"></i>
+                <span class="font-bold text-xl">ระบบจัดการร้าน</span>
+            </div>
+            <div class="flex-1 py-4 flex flex-row md:flex-col overflow-x-auto md:overflow-visible px-2 md:px-0 space-x-1 md:space-x-0 md:space-y-1 pb-4">
+                <button onclick="switchTab('promo')" id="tab-promo" class="admin-tab flex items-center px-4 py-3 md:px-6 md:py-4 rounded-lg md:rounded-none whitespace-nowrap transition-colors font-medium text-gray-300 hover:bg-gray-800 hover:text-white md:border-l-4 md:border-transparent"><i data-lucide="ticket" class="mr-3 w-5 h-5"></i> โปรโมชั่น</button>
+                <button onclick="switchTab('menu')" id="tab-menu" class="admin-tab active flex items-center px-4 py-3 md:px-6 md:py-4 rounded-lg md:rounded-none whitespace-nowrap transition-colors font-medium bg-red-600 text-white md:border-l-4 md:border-white shadow-md md:shadow-none"><i data-lucide="menu" class="mr-3 w-5 h-5"></i> เมนูอาหาร</button>
+                <button onclick="switchTab('atmosphere')" id="tab-atmosphere" class="admin-tab flex items-center px-4 py-3 md:px-6 md:py-4 rounded-lg md:rounded-none whitespace-nowrap transition-colors font-medium text-gray-300 hover:bg-gray-800 hover:text-white md:border-l-4 md:border-transparent"><i data-lucide="image" class="mr-3 w-5 h-5"></i> บรรยากาศร้าน</button>
+                <button onclick="switchTab('notice')" id="tab-notice" class="admin-tab flex items-center px-4 py-3 md:px-6 md:py-4 rounded-lg md:rounded-none whitespace-nowrap transition-colors font-medium text-gray-300 hover:bg-gray-800 hover:text-white md:border-l-4 md:border-transparent"><i data-lucide="megaphone" class="mr-3 w-5 h-5"></i> บอร์ดประกาศ</button>
+                <button onclick="switchTab('contact')" id="tab-contact" class="admin-tab flex items-center px-4 py-3 md:px-6 md:py-4 rounded-lg md:rounded-none whitespace-nowrap transition-colors font-medium text-gray-300 hover:bg-gray-800 hover:text-white md:border-l-4 md:border-transparent"><i data-lucide="phone" class="mr-3 w-5 h-5"></i> ข้อมูลติดต่อ</button>
+                <button onclick="switchTab('settings')" id="tab-settings" class="admin-tab flex items-center px-4 py-3 md:px-6 md:py-4 rounded-lg md:rounded-none whitespace-nowrap transition-colors font-medium text-gray-300 hover:bg-gray-800 hover:text-white md:border-l-4 md:border-transparent"><i data-lucide="star" class="mr-3 w-5 h-5"></i> ตั้งค่าหน้าปก</button>
+            </div>
+            <div class="p-4 border-t border-gray-800 mt-auto bg-gray-900 hidden md:block">
+                <button onclick="handleLogout()" class="w-full flex items-center justify-center bg-gray-800 hover:bg-red-600 text-white py-3 rounded-lg transition font-medium"><i data-lucide="log-out" class="w-5 h-5 mr-2"></i> ออกจากระบบ</button>
+            </div>
+        </div>
 
-        const DEFAULT_TAGS = [
-            { id: 't1', label: 'ST', bgColor: '#2563eb', textColor: '#ffffff' }, // สีน้ำเงิน
-            { id: 't2', label: 'SL', bgColor: '#9333ea', textColor: '#ffffff' }, // สีม่วง
-            { id: 't3', label: 'CR', bgColor: '#eab308', textColor: '#0f172a' }  // สีเหลือง
-        ];
-
-        const DEFAULT_STATES = [
-            { id: 's1', label: '/', bgColor: '#22c55e', textColor: '#ffffff' }, // สีเขียว
-            { id: 's2', label: 'X', bgColor: '#ef4444', textColor: '#ffffff' }, // สีแดง
-            { id: 's3', label: '2', bgColor: '#3b82f6', textColor: '#ffffff' },
-            { id: 's4', label: 'SL', bgColor: '#c084fc', textColor: '#ffffff' },
-            { id: 's5', label: 'CR', bgColor: '#facc15', textColor: '#1e293b' },
-            { id: 's_other', label: 'อื่นๆ', bgColor: '#64748b', textColor: '#ffffff' } // ค่าเริ่มต้นสีเทา
-        ];
-
-        // --- 2. ฐานข้อมูลจำลอง (Local Storage) ---
-        let DB = {
-            clubs: JSON.parse(localStorage.getItem('db_clubs')) || DEFAULT_CLUBS,
-            tags: JSON.parse(localStorage.getItem('db_tags')) || DEFAULT_TAGS,
-            states: JSON.parse(localStorage.getItem('db_states')) || DEFAULT_STATES,
-            supervisors: JSON.parse(localStorage.getItem('db_supervisors')) || [],
-            employees: JSON.parse(localStorage.getItem('db_employees')) || [],
-            records: JSON.parse(localStorage.getItem('db_records')) || {}, // เก็บการเช็คชื่อแยกรายวัน
-            logs: JSON.parse(localStorage.getItem('db_logs')) || [] // ประวัติการทำงาน
-        };
-
-        let APP = {
-            currentUser: null, // role: 'admin' หรือ 'sup'
-            currentDate: new Date().toISOString().split('T')[0], // วันที่เปิดแอป
-            activeClubId: DB.clubs[0]?.id || null,
-            currentView: 'attendance'
-        };
-
-        // ฟังก์ชันบันทึกข้อมูลลง Browser
-        function saveDB() {
-            localStorage.setItem('db_clubs', JSON.stringify(DB.clubs));
-            localStorage.setItem('db_tags', JSON.stringify(DB.tags));
-            localStorage.setItem('db_states', JSON.stringify(DB.states));
-            localStorage.setItem('db_supervisors', JSON.stringify(DB.supervisors));
-            localStorage.setItem('db_employees', JSON.stringify(DB.employees));
-            localStorage.setItem('db_records', JSON.stringify(DB.records));
-            localStorage.setItem('db_logs', JSON.stringify(DB.logs));
-        }
-
-        // ฟังก์ชันบันทึก Log การกระทำของระบบ
-        function addLog(action, details) {
-            const now = new Date();
-            DB.logs.push({
-                id: Date.now(),
-                date: APP.currentDate,
-                timestamp: now.toLocaleTimeString('th-TH'),
-                action: action,
-                details: details,
-                by: APP.currentUser ? APP.currentUser.name : 'Unknown'
-            });
-            if(DB.logs.length > 2000) DB.logs.shift(); // กันเมมเต็ม
-            saveDB();
-        }
-
-        // STREAMING_CHUNK: ระบบ Login และ สิทธิ์การใช้งาน
-        // --- 3. ระบบ LOGIN & AUTH ---
-        async function promptLogin() {
-            const { value: pin } = await Swal.fire({
-                title: 'เข้าสู่ระบบ',
-                input: 'password',
-                inputLabel: 'ใส่ USER ID 6 หลัก (Admin: 000000)',
-                inputPlaceholder: '000000',
-                inputAttributes: { maxlength: 6, pattern: '[0-9]*', inputmode: 'numeric' },
-                background: '#1e293b', color: '#fff', confirmButtonColor: '#3b82f6',
-                showCancelButton: true, cancelButtonText: 'ยกเลิก'
-            });
-
-            if (pin) {
-                if (pin === '000000') {
-                    // แอดมินทำได้ทุกอย่าง
-                    APP.currentUser = { role: 'admin', name: 'Admin (ผู้ดูแลระบบ)' };
-                    loginSuccess();
-                } else {
-                    // ตรวจสอบกับรหัสที่ตั้งค่าไว้ใน Google Sheets / CSV (ถูกโหลดมาเก็บใน DB.supervisors)
-                    const sup = DB.supervisors.find(s => s.pin === pin);
-                    if (sup) {
-                        APP.currentUser = { role: 'sup', name: sup.name }; // หัวหน้างาน
-                        loginSuccess();
-                    } else {
-                        Swal.fire({ icon: 'error', title: 'รหัสไม่ถูกต้อง', background: '#1e293b', color: '#fff' });
-                    }
-                }
-            }
-        }
-
-        function loginSuccess() {
-            Swal.fire({ toast:true, position: 'top-end', icon: 'success', title: `ยินดีต้อนรับ ${APP.currentUser.name}`, showConfirmButton: false, timer: 1500, background: '#1e293b', color: '#fff'});
-            updateUI_Auth();
-        }
-
-        function logout() {
-            APP.currentUser = null;
-            APP.currentView = 'attendance';
-            updateUI_Auth();
-        }
-
-        function updateUI_Auth() {
-            const btnLogin = document.getElementById('btnLogin');
-            const btnLogout = document.getElementById('btnLogout');
-            const btnSyncCSV = document.getElementById('btnSyncCSV');
-            const userInfo = document.getElementById('userInfo');
-            
-            const tabEmp = document.getElementById('tab-employees');
-            const tabLogs = document.getElementById('tab-logs');
-            const tabSet = document.getElementById('tab-settings');
-
-            if (APP.currentUser) {
-                btnLogin.classList.add('hidden');
-                btnLogout.classList.remove('hidden');
-                btnSyncCSV.classList.remove('hidden');
-                userInfo.classList.remove('hidden');
-                tabEmp.classList.remove('hidden'); // Sup และ Admin เห็นหน้าจัดการพนักงาน
+        <!-- Admin Content Area -->
+        <div class="flex-1 p-4 md:p-8 overflow-y-auto w-full">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 max-w-5xl mx-auto min-h-[80vh]">
                 
-                if(APP.currentUser.role === 'admin') {
-                    userInfo.innerHTML = `<i class="fa-solid fa-crown text-yellow-400"></i> ${APP.currentUser.name}`;
-                    tabLogs.classList.remove('hidden'); // Admin เท่านั้นดู Log ได้
-                    tabSet.classList.remove('hidden');  // Admin เท่านั้นตั้งค่าระบบได้
-                } else {
-                    userInfo.innerHTML = `<i class="fa-solid fa-user-check text-blue-400"></i> ${APP.currentUser.name}`;
-                    tabLogs.classList.add('hidden');
-                    tabSet.classList.add('hidden');
-                }
-            } else {
-                // โหมดผู้ชม (พนักงานทั่วไป ไม่ล็อกอิน)
-                btnLogin.classList.remove('hidden');
-                btnLogout.classList.add('hidden');
-                btnSyncCSV.classList.add('hidden');
-                userInfo.classList.add('hidden');
-                tabEmp.classList.add('hidden');
-                tabLogs.classList.add('hidden');
-                tabSet.classList.add('hidden');
-            }
-            switchView('attendance'); 
-        }
-
-        function switchView(viewName) {
-            APP.currentView = viewName;
-            ['attendance', 'employees', 'logs', 'settings'].forEach(v => {
-                const btn = document.getElementById(`tab-${v}`);
-                if(btn) btn.className = "px-6 py-2 rounded-xl font-medium transition bg-slate-800 text-slate-400 hover:bg-slate-700 whitespace-nowrap";
-                const view = document.getElementById(`view-${v}`);
-                if(view) view.classList.add('hidden');
-            });
-            
-            const activeBtn = document.getElementById(`tab-${viewName}`);
-            if(activeBtn) activeBtn.className = "px-6 py-2 rounded-xl font-medium transition bg-blue-600 text-white shadow-lg whitespace-nowrap";
-            const activeView = document.getElementById(`view-${viewName}`);
-            if(activeView) activeView.classList.remove('hidden');
-
-            renderApp();
-        }
-
-        function changeDate(newDate) {
-            APP.currentDate = newDate;
-            renderApp();
-        }
-
-        function renderApp() {
-            document.getElementById('datePicker').value = APP.currentDate;
-            if (APP.currentView === 'attendance') renderAttendance();
-            else if (APP.currentView === 'employees') renderEmployees();
-            else if (APP.currentView === 'logs') renderLogs();
-            else if (APP.currentView === 'settings') renderSettings();
-        }
-
-        // STREAMING_CHUNK: สร้างตารางเช็คชื่อ
-        // --- 4. หน้าเช็คชื่อหลัก (Attendance) ---
-        function renderAttendance() {
-            const tabsContainer = document.getElementById('clubTabsContainer');
-            tabsContainer.innerHTML = '';
-            
-            if(!DB.clubs.find(c => c.id === APP.activeClubId) && DB.clubs.length > 0) APP.activeClubId = DB.clubs[0].id;
-
-            DB.clubs.forEach(club => {
-                const isActive = APP.activeClubId === club.id;
-                tabsContainer.innerHTML += `
-                    <button onclick="APP.activeClubId='${club.id}'; renderAttendance()" 
-                        class="px-5 py-2 rounded-xl font-medium whitespace-nowrap transition border ${isActive ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg' : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'}">
-                        ${club.name}
-                    </button>
-                `;
-            });
-
-            const activeClub = DB.clubs.find(c => c.id === APP.activeClubId);
-            if (!activeClub) return;
-
-            const clubEmps = DB.employees.filter(e => e.clubId === activeClub.id);
-            if (clubEmps.length === 0) {
-                document.getElementById('tableBody').innerHTML = '';
-                document.getElementById('tableHeader').innerHTML = '';
-                document.getElementById('emptyState').classList.remove('hidden');
-                return;
-            }
-            document.getElementById('emptyState').classList.add('hidden');
-
-            const canEdit = APP.currentUser !== null; // เฉพาะคนล็อกอิน (Admin, Sup) ถึงกดแก้ได้
-
-            // โครงสร้าง Table Header ตามที่ผู้ใช้ต้องการเป๊ะ: No | Tag | รายชื่อ | <Times...> | หมายเหตุ
-            let thHTML = `
-                <th class="px-3 py-4 w-12 text-center rounded-tl-xl border-b border-slate-700 bg-slate-900 sticky left-0 z-20">No.</th>
-                <th class="px-3 py-4 w-28 text-center border-b border-slate-700 bg-slate-900 z-10">Tag</th>
-                <th class="px-4 py-4 min-w-[200px] border-b border-slate-700 bg-slate-900 z-10">รายชื่อพนักงาน</th>
-            `;
-            // หัวตารางเวลา: แอดมินสามารถคลิกแก้เวลาได้
-            activeClub.times.forEach((t, index) => {
-                const headerClick = APP.currentUser?.role === 'admin' ? `onclick="editTime('${activeClub.id}', ${index})" class="px-2 py-4 w-14 text-center border-b border-slate-700 cursor-pointer hover:text-blue-400 transition" title="คลิกเพื่อแก้เวลา"` : `class="px-2 py-4 w-14 text-center border-b border-slate-700"`;
-                thHTML += `<th ${headerClick}>${t}</th>`;
-            });
-            thHTML += `<th class="px-4 py-4 min-w-[150px] rounded-tr-xl border-b border-slate-700">หมายเหตุ</th>`;
-            document.getElementById('tableHeader').innerHTML = thHTML;
-
-            // ดึงข้อมูลเช็คชื่อของวันนี้
-            const todayRecords = (DB.records[APP.currentDate] && DB.records[APP.currentDate][activeClub.id]) || {};
-
-            let trHTML = '';
-            clubEmps.forEach((emp, index) => {
-                const empRecord = todayRecords[emp.id] || { times: {}, remark: '' };
-                
-                // คอลัมน์ Tag จิ้มได้สำหรับ Admin & Sup
-                const tagClickAttr = canEdit ? `onclick="openTagModal('${emp.id}')" title="คลิกเพื่อแก้ไข Tag"` : '';
-                const tagCursor = canEdit ? 'cursor-pointer hover:bg-slate-700/50 hover:shadow-inner' : '';
-
-                trHTML += `<tr class="hover:bg-slate-700/30 transition group border-b border-slate-700/50">
-                    <td class="px-3 py-3 text-center text-slate-500 bg-slate-800/80 sticky left-0 z-10">${index + 1}</td>
+                <!-- TAB CONTENT: PROMOTIONS -->
+                <div id="content-promo" class="tab-content hidden fade-in">
+                    <div class="flex justify-between items-center mb-6 border-b pb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">จัดการป้ายโปรโมชั่น (สไลด์ด้านบน)</h2>
+                        <button id="btn-add-promo" onclick="openPromoForm()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center font-bold shadow-sm transition"><i data-lucide="plus" class="w-5 h-5 mr-1"></i> เพิ่มป้ายใหม่</button>
+                    </div>
                     
-                    <td class="px-3 py-2 text-center ${tagCursor}" ${tagClickAttr}>
-                        <div class="flex gap-1 flex-wrap justify-center pointer-events-none min-h-[1.5rem]">
-                            ${emp.tags.length > 0 ? emp.tags.map(tagId => {
-                                const tObj = DB.tags.find(t => t.id === tagId);
-                                return tObj ? `<span class="custom-badge text-[10px] px-1.5 py-0" style="background-color:${tObj.bgColor}; color:${tObj.textColor};">${tObj.label}</span>` : '';
-                            }).join('') : '<span class="text-slate-600 text-xs italic">กดเพิ่ม</span>'}
+                    <form id="form-promo" onsubmit="savePromo(event)" class="hidden space-y-4 bg-gray-50 p-6 rounded-xl border border-gray-200 mb-6">
+                        <input type="hidden" id="promo-id" />
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">ลิงก์รูปภาพโปรโมชั่น (แนวนอน แนะนำ 16:9)</label>
+                            <input type="url" id="promo-image" required class="input-field" placeholder="https://..." oninput="document.getElementById('promo-preview').src=convertDriveUrl(this.value)" />
+                            <img id="promo-preview" src="" alt="Preview" class="mt-3 h-32 rounded-lg shadow-md object-cover hidden" onerror="this.classList.add('hidden')" onload="this.classList.remove('hidden')" />
                         </div>
-                    </td>
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">ลิงก์เมื่อคลิกรูปภาพ (URL ปลายทาง)</label>
+                            <input type="url" id="promo-link" class="input-field" placeholder="https://... หรือใส่ #menu" />
+                        </div>
+                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                            <button type="button" onclick="closeForms()" class="px-5 py-2.5 font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition shadow-sm">ยกเลิก</button>
+                            <button type="submit" class="px-5 py-2.5 font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center transition shadow-md"><i data-lucide="save" class="w-5 h-5 mr-2"></i> บันทึก</button>
+                        </div>
+                    </form>
 
-                    <td class="px-4 py-3">
-                        <div class="font-medium text-slate-200 text-base">${emp.code} - ${emp.name}</div>
-                    </td>`;
-                
-                // คอลัมน์เวลา
-                activeClub.times.forEach(time => {
-                    const timeData = empRecord.times[time]; 
-                    const stateObj = timeData ? DB.states.find(s => s.id === timeData.stateId) : null;
-                    
-                    let cellContent = '-';
-                    let cellStyle = 'bg-slate-800 text-slate-500 border border-slate-700'; 
-                    let tooltip = '';
-                    
-                    if (stateObj) {
-                        cellContent = stateObj.label;
-                        cellStyle = `background-color: ${stateObj.bgColor}; color: ${stateObj.textColor}; border: 1px solid rgba(255,255,255,0.2);`;
-                        if (canEdit && timeData.checker) tooltip = `title="เช็คโดย: ${timeData.checker}"`;
-                    }
+                    <div id="admin-promo-list" class="grid gap-4"></div>
+                </div>
 
-                    trHTML += `
-                        <td class="px-1 py-2 text-center">
-                            <div ${tooltip} class="custom-badge transition-transform w-10 h-10 ${canEdit ? 'cursor-pointer hover:scale-110 shadow-md' : 'opacity-80'}" 
-                                 style="${cellStyle}"
-                                 ${canEdit ? `onclick="openCheckinModal('${emp.id}', '${time}')"` : ''}>
-                                ${cellContent}
+                <!-- TAB CONTENT: MENU -->
+                <div id="content-menu" class="tab-content block fade-in">
+                    <div class="flex justify-between items-center mb-6 border-b pb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">จัดการเมนูอาหาร</h2>
+                        <button id="btn-add-menu" onclick="openMenuForm()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center font-bold shadow-sm transition"><i data-lucide="plus" class="w-5 h-5 mr-1"></i> เพิ่มใหม่</button>
+                    </div>
+                    
+                    <form id="form-menu" onsubmit="saveMenu(event)" class="hidden space-y-5 bg-gray-50 p-6 rounded-xl border border-gray-200 mb-6">
+                        <h3 id="form-menu-title" class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">✨ เพิ่มเมนูใหม่</h3>
+                        <input type="hidden" id="menu-id" />
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div><label class="block text-sm font-semibold mb-1">ชื่อเมนู</label><input type="text" id="menu-name" required class="input-field" /></div>
+                            <div><label class="block text-sm font-semibold mb-1">ราคา (บาท)</label><input type="number" id="menu-price" required class="input-field" /></div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-semibold mb-1">ลิงก์รูปภาพ (รองรับลิงก์ Google Drive)</label>
+                                <input type="url" id="menu-image" required class="input-field" placeholder="https://..." oninput="document.getElementById('menu-preview').src=convertDriveUrl(this.value)" />
+                                <img id="menu-preview" src="" alt="Preview" class="mt-3 h-32 rounded-lg shadow-md object-cover hidden" onerror="this.classList.add('hidden')" onload="this.classList.remove('hidden')" />
                             </div>
-                        </td>`;
-                });
+                            <div class="md:col-span-2"><label class="block text-sm font-semibold mb-1">รายละเอียด/คำอธิบาย</label><textarea id="menu-desc" rows="2" class="input-field"></textarea></div>
+                            <div class="md:col-span-2 flex items-center bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                                <input type="checkbox" id="menu-recommended" class="w-5 h-5 text-red-600 rounded border-gray-300 focus:ring-red-500 cursor-pointer" />
+                                <label for="menu-recommended" class="ml-3 font-bold text-yellow-900 cursor-pointer flex items-center"><i data-lucide="star" class="w-5 h-5 mr-1 text-yellow-500" style="fill:#eab308"></i> ตั้งเป็นเมนูแนะนำ</label>
+                            </div>
+                        </div>
+                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                            <button type="button" onclick="closeForms()" class="px-5 py-2.5 font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition shadow-sm">ยกเลิก</button>
+                            <button type="submit" class="px-5 py-2.5 font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center transition shadow-md"><i data-lucide="save" class="w-5 h-5 mr-2"></i> บันทึก</button>
+                        </div>
+                    </form>
 
-                // คอลัมน์หมายเหตุ
-                trHTML += `
-                    <td class="px-4 py-2">
-                        <input type="text" value="${empRecord.remark || ''}" 
-                            ${!canEdit ? 'readonly' : ''}
-                            onchange="saveRemark('${emp.id}', this.value)"
-                            placeholder="${canEdit ? 'พิมพ์หมายเหตุ...' : ''}"
-                            class="w-full bg-transparent border-b border-transparent ${canEdit ? 'focus:border-slate-500 hover:border-slate-600' : ''} text-slate-300 text-sm px-2 py-1 outline-none transition">
-                    </td>
-                </tr>`;
-            });
-            document.getElementById('tableBody').innerHTML = trHTML;
-        }
-
-        // STREAMING_CHUNK: ฟังชันก์แก้ไข Tag และ เช็คชื่อ
-        // ฟังก์ชัน Admin แก้ไขหัวตารางเวลา
-        async function editTime(clubId, timeIndex) {
-            const club = DB.clubs.find(c => c.id === clubId);
-            const { value: newTime } = await Swal.fire({
-                title: 'กำหนดเวลาเช็คชื่อ',
-                input: 'text', inputValue: club.times[timeIndex],
-                background: '#1e293b', color: '#fff', showCancelButton: true
-            });
-            if (newTime) { club.times[timeIndex] = newTime; saveDB(); renderAttendance(); }
-        }
-
-        // หน้าต่างจิ้มเลือก Tag (สำหรับ Sup/Admin)
-        async function openTagModal(empId) {
-            if(!APP.currentUser) return; // กันพนักงานกด
-
-            const emp = DB.employees.find(e => e.id === empId);
-            let html = '<div class="grid grid-cols-2 gap-2 mt-2 text-left">';
-            DB.tags.forEach(tag => {
-                const isChecked = emp.tags.includes(tag.id) ? 'checked' : '';
-                html += `
-                    <label class="flex items-center gap-2 p-2 bg-slate-800 rounded-lg cursor-pointer border border-slate-700 hover:border-blue-500">
-                        <input type="checkbox" value="${tag.id}" class="tag-checkbox w-4 h-4" ${isChecked}>
-                        <span class="custom-badge" style="background-color:${tag.bgColor}; color:${tag.textColor};">${tag.label}</span>
-                    </label>
-                `;
-            });
-            html += '</div>';
-
-            const { value: selectedTags } = await Swal.fire({
-                title: `จัดการ Tag ของ ${emp.name}`,
-                html: html, background: '#1e293b', color: '#fff', showCancelButton: true,
-                preConfirm: () => Array.from(document.querySelectorAll('.tag-checkbox:checked')).map(cb => cb.value)
-            });
-
-            if (selectedTags) {
-                emp.tags = selectedTags;
-                saveDB();
-                addLog('อัปเดต Tag', `ตั้งค่า Tag ให้พนักงาน ${emp.name}`);
-                renderAttendance();
-            }
-        }
-
-        // หน้าต่างเช็คชื่อ (จิ้มเวลา)
-        async function openCheckinModal(empId, time) {
-            const emp = DB.employees.find(e => e.id === empId);
-            
-            let optionsHTML = DB.states.map(s => `
-                <div class="m-1 inline-block">
-                    <input type="radio" name="swal-state" id="st_${s.id}" value="${s.id}" class="hidden peer">
-                    <label for="st_${s.id}" class="custom-badge cursor-pointer peer-checked:ring-4 ring-white/50 shadow-lg" 
-                           style="background-color:${s.bgColor}; color:${s.textColor}; padding: 12px 24px; font-size: 1.1rem;">
-                        ${s.label}
-                    </label>
+                    <div id="admin-menu-list" class="grid gap-4 md:grid-cols-2"></div>
                 </div>
-            `).join('');
 
-            optionsHTML += `
-                <div class="mt-4 border-t border-slate-700 pt-4">
-                    <input type="radio" name="swal-state" id="st_clear" value="clear" class="hidden peer">
-                    <label for="st_clear" class="block w-full text-center bg-slate-700 text-white py-3 rounded-xl cursor-pointer hover:bg-slate-600 transition">
-                        <i class="fa-solid fa-eraser"></i> ลบข้อมูลออก (ช่องว่าง)
-                    </label>
-                </div>`;
-
-            const { value: stateId } = await Swal.fire({
-                title: `เวลา ${time} - ${emp.name}`,
-                html: `<div class="mt-2">${optionsHTML}</div>`,
-                background: '#1e293b', color: '#fff', showCancelButton: true, focusConfirm: false,
-                preConfirm: () => {
-                    const checked = document.querySelector('input[name="swal-state"]:checked');
-                    return checked ? checked.value : null;
-                }
-            });
-
-            if (stateId) {
-                const date = APP.currentDate;
-                const clubId = APP.activeClubId;
-
-                if (!DB.records[date]) DB.records[date] = {};
-                if (!DB.records[date][clubId]) DB.records[date][clubId] = {};
-                if (!DB.records[date][clubId][empId]) DB.records[date][clubId][empId] = { times: {}, remark: '' };
-
-                if (stateId === 'clear') {
-                    delete DB.records[date][clubId][empId].times[time];
-                    addLog('ลบเช็คชื่อ', `ลบเวลา ${time} ของ ${emp.name}`);
-                } else {
-                    DB.records[date][clubId][empId].times[time] = { stateId: stateId, checker: APP.currentUser.name };
-                    const s = DB.states.find(x => x.id === stateId);
-                    addLog('เช็คชื่อ', `เช็ค "${s.label}" เวลา ${time} ให้ ${emp.name}`);
-                }
-                saveDB(); renderAttendance();
-            }
-        }
-
-        function saveRemark(empId, txt) {
-            const date = APP.currentDate;
-            const clubId = APP.activeClubId;
-            if (!DB.records[date]) DB.records[date] = {};
-            if (!DB.records[date][clubId]) DB.records[date][clubId] = {};
-            if (!DB.records[date][clubId][empId]) DB.records[date][clubId][empId] = { times: {}, remark: '' };
-            DB.records[date][clubId][empId].remark = txt;
-            saveDB();
-        }
-
-        // STREAMING_CHUNK: ระบบจัดการพนักงาน และ Log
-        // --- 5. จัดการพนักงานรายสาขา ---
-        function renderEmployees() {
-            const container = document.getElementById('employeeListContainer');
-            container.innerHTML = '';
-
-            DB.clubs.forEach(club => {
-                const empsInClub = DB.employees.filter(e => e.clubId === club.id);
-                
-                let tableRows = '';
-                if(empsInClub.length === 0) {
-                    tableRows = `<tr><td colspan="5" class="px-4 py-6 text-center text-slate-500">ไม่มีรายชื่อพนักงาน</td></tr>`;
-                } else {
-                    empsInClub.forEach(emp => {
-                        tableRows += `
-                            <tr class="hover:bg-slate-700/50">
-                                <td class="px-4 py-3 text-blue-400 font-medium">${emp.code}</td>
-                                <td class="px-4 py-3 text-white font-medium">${emp.name}</td>
-                                <td class="px-4 py-3 text-slate-300">
-                                    <span class="bg-slate-800 px-2 py-1 rounded border border-slate-600 text-xs">${emp.startDate || '-'}</span> 
-                                    <span class="text-slate-500 text-xs mx-1">ถึง</span> 
-                                    <span class="bg-slate-800 px-2 py-1 rounded border border-slate-600 text-xs">${emp.endDate || '-'}</span>
-                                </td>
-                                <td class="px-4 py-3 text-right">
-                                    <button onclick="editEmpDuration('${emp.id}')" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg mr-2 transition"><i class="fa-solid fa-calendar-day"></i> ตั้งวันทำงาน</button>
-                                    ${APP.currentUser.role === 'admin' ? `<button onclick="deleteEmployee('${emp.id}')" class="text-red-400 hover:text-red-500 p-2"><i class="fa-solid fa-trash"></i></button>` : ''}
-                                </td>
-                            </tr>
-                        `;
-                    });
-                }
-
-                container.innerHTML += `
-                    <div class="mb-8 bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow">
-                        <div class="bg-slate-800 px-4 py-3 border-b border-slate-700 flex justify-between items-center">
-                            <h3 class="font-bold text-blue-400 text-lg"><i class="fa-solid fa-store mr-2"></i>${club.name}</h3>
-                            <span class="text-sm bg-slate-700 px-2 py-1 rounded-lg">พนักงาน: ${empsInClub.length} คน</span>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left">
-                                <thead class="bg-slate-900/50 text-slate-400 border-b border-slate-700">
-                                    <tr>
-                                        <th class="px-4 py-3 w-20">รหัส</th>
-                                        <th class="px-4 py-3">ชื่อพนักงาน</th>
-                                        <th class="px-4 py-3">กำหนดวันทำงาน</th>
-                                        <th class="px-4 py-3 text-right">จัดการ</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-700/50">
-                                    ${tableRows}
-                                </tbody>
-                            </table>
-                        </div>
+                <!-- TAB CONTENT: ATMOSPHERE -->
+                <div id="content-atmosphere" class="tab-content hidden fade-in">
+                    <div class="flex justify-between items-center mb-6 border-b pb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">จัดการรูปภาพบรรยากาศ</h2>
+                        <button id="btn-add-atm" onclick="openAtmosphereForm()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center font-bold shadow-sm transition"><i data-lucide="plus" class="w-5 h-5 mr-1"></i> เพิ่มใหม่</button>
                     </div>
-                `;
-            });
-        }
-
-        async function addEmployee() {
-            const clubOptions = DB.clubs.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            const { value: form } = await Swal.fire({
-                title: 'เพิ่มพนักงานเข้าสู่ระบบ',
-                html: `
-                    <input id="inp-code" class="swal2-input bg-slate-800 text-white" placeholder="รหัสพนักงาน (เช่น 601)">
-                    <input id="inp-name" class="swal2-input bg-slate-800 text-white" placeholder="ชื่อพนักงาน">
-                    <select id="inp-club" class="swal2-select bg-slate-800 text-white border-slate-600 w-[80%] mx-auto mt-4">
-                        ${clubOptions}
-                    </select>
-                `,
-                background: '#1e293b', color: '#fff', focusConfirm: false,
-                preConfirm: () => ({ code: document.getElementById('inp-code').value, name: document.getElementById('inp-name').value, clubId: document.getElementById('inp-club').value })
-            });
-
-            if (form && form.code && form.name) {
-                DB.employees.push({ id: 'e'+Date.now(), code: form.code, name: form.name, clubId: form.clubId, tags: [], startDate: '', endDate: '' });
-                saveDB(); renderEmployees();
-            }
-        }
-
-        async function editEmpDuration(empId) {
-            const emp = DB.employees.find(e => e.id === empId);
-            const { value: dates } = await Swal.fire({
-                title: `วันทำงาน: ${emp.name}`,
-                html: `
-                    <div class="text-left text-sm mb-2 text-slate-400">เริ่มวันที่</div>
-                    <input type="date" id="start-date" class="swal2-input bg-slate-800 text-white" style="filter: invert(1);" value="${emp.startDate || ''}">
-                    <div class="text-left text-sm mt-4 mb-2 text-slate-400">ถึงวันที่</div>
-                    <input type="date" id="end-date" class="swal2-input bg-slate-800 text-white" style="filter: invert(1);" value="${emp.endDate || ''}">
-                `,
-                background: '#1e293b', color: '#fff', showCancelButton: true,
-                preConfirm: () => ({ start: document.getElementById('start-date').value, end: document.getElementById('end-date').value })
-            });
-
-            if(dates) {
-                emp.startDate = dates.start;
-                emp.endDate = dates.end;
-                saveDB(); renderEmployees();
-            }
-        }
-
-        function deleteEmployee(empId) {
-            Swal.fire({title: 'ลบพนักงานออกจากระบบ?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', background: '#1e293b', color: '#fff'
-            }).then((res) => {
-                if(res.isConfirmed){ DB.employees = DB.employees.filter(e => e.id !== empId); saveDB(); renderEmployees(); }
-            });
-        }
-
-        // --- 6. ประวัติการเช็คชื่อ (Audit Logs) ---
-        function renderLogs() {
-            const tbody = document.getElementById('logListBody');
-            const filteredLogs = DB.logs.filter(log => log.date === APP.currentDate).reverse();
-
-            if (filteredLogs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-slate-500">ไม่มีประวัติทำรายการในวันที่เลือก</td></tr>`;
-                return;
-            }
-            tbody.innerHTML = filteredLogs.map(log => `
-                <tr class="hover:bg-slate-700/50">
-                    <td class="px-4 py-3 text-slate-400">${log.timestamp}</td>
-                    <td class="px-4 py-3 font-semibold text-emerald-400"><i class="fa-solid fa-user-check mr-2 text-sm"></i>${log.by}</td>
-                    <td class="px-4 py-3 text-white">${log.action}</td>
-                    <td class="px-4 py-3 text-slate-400 text-sm">${log.details}</td>
-                </tr>
-            `).join('');
-        }
-
-        // STREAMING_CHUNK: ตั้งค่าระบบ & ระบบเชื่อม CSV
-        // --- 7. ตั้งค่าระบบ (Settings) ---
-        function renderSettings() {
-            document.getElementById('supervisorList').innerHTML = DB.supervisors.map(s => `
-                <div class="flex justify-between items-center bg-slate-800 p-2 rounded border border-slate-700">
-                    <span class="text-sm font-medium text-slate-300">${s.name} <span class="text-xs text-slate-500 ml-2">(PIN: ${s.pin})</span></span>
-                    <button onclick="deleteData('supervisors', '${s.id}')" class="text-red-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            `).join('');
-
-            document.getElementById('clubConfigList').innerHTML = DB.clubs.map(c => `
-                <div class="bg-slate-800 p-3 rounded-lg border border-slate-700">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="font-bold text-blue-400">${c.name}</span>
-                        <button onclick="deleteData('clubs', '${c.id}')" class="text-red-400 hover:text-red-500 text-sm"><i class="fa-solid fa-trash"></i> ลบ</button>
-                    </div>
-                </div>
-            `).join('');
-
-            document.getElementById('tagConfigList').innerHTML = DB.tags.map(t => `
-                <div class="flex justify-between items-center bg-slate-800 p-2 rounded border border-slate-700">
-                    <span class="custom-badge" style="background-color:${t.bgColor}; color:${t.textColor};">${t.label}</span>
-                    <button onclick="deleteData('tags', '${t.id}')" class="text-red-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            `).join('');
-
-            document.getElementById('checkStateList').innerHTML = DB.states.map(s => `
-                <div class="flex justify-between items-center bg-slate-800 p-2 rounded border border-slate-700">
-                    <span class="custom-badge" style="background-color:${s.bgColor}; color:${s.textColor};">${s.label}</span>
-                    <button onclick="deleteData('states', '${s.id}')" class="text-red-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            `).join('');
-        }
-
-        function deleteData(collection, id) {
-            Swal.fire({title: 'ยืนยันการลบ?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', background: '#1e293b', color: '#fff'})
-            .then((res) => {
-                if(res.isConfirmed){ DB[collection] = DB[collection].filter(item => item.id !== id); saveDB(); renderSettings(); }
-            });
-        }
-
-        async function addSupervisor() {
-            const { value: form } = await Swal.fire({
-                title: 'เพิ่มหัวหน้างาน',
-                html: `<input id="sup-name" class="swal2-input bg-slate-800 text-white" placeholder="ชื่อหัวหน้างาน">
-                       <input id="sup-pin" type="number" class="swal2-input bg-slate-800 text-white" placeholder="ตั้งรหัส 6 หลัก (ใช้ล็อกอิน)" maxlength="6">`,
-                background: '#1e293b', color: '#fff', preConfirm: () => ({ name: document.getElementById('sup-name').value, pin: document.getElementById('sup-pin').value })
-            });
-            if (form && form.name && form.pin.length === 6) { DB.supervisors.push({ id: 'sup'+Date.now(), name: form.name, pin: form.pin }); saveDB(); renderSettings(); }
-            else if (form) Swal.fire({icon: 'error', title: 'กรุณากรอกรหัส 6 หลัก', background: '#1e293b', color: '#fff'});
-        }
-
-        async function createBadgePrompt(title) {
-            const { value: form } = await Swal.fire({
-                title: title,
-                html: `
-                    <input id="badge-label" class="swal2-input bg-slate-800 text-white mb-4" placeholder="ข้อความแสดงผล (เช่น ST, มา, สาย, อื่นๆ)">
-                    <div class="flex justify-around mt-4">
-                        <div class="text-center">
-                            <label class="block text-xs text-slate-400 mb-1">สีพื้นหลัง</label>
-                            <input type="color" id="badge-bg" value="#64748b" class="w-12 h-12 cursor-pointer border-0 p-0">
-                        </div>
-                        <div class="text-center">
-                            <label class="block text-xs text-slate-400 mb-1">สีอักษร</label>
-                            <input type="color" id="badge-text" value="#ffffff" class="w-12 h-12 cursor-pointer border-0 p-0">
-                        </div>
-                    </div>
-                `,
-                background: '#1e293b', color: '#fff', showCancelButton: true,
-                preConfirm: () => ({ label: document.getElementById('badge-label').value, bgColor: document.getElementById('badge-bg').value, textColor: document.getElementById('badge-text').value })
-            });
-            return form;
-        }
-
-        async function addCheckState() { const form = await createBadgePrompt('สร้างป้ายสถานะเช็คชื่อ'); if (form?.label) { DB.states.push({ id: 's'+Date.now(), ...form }); saveDB(); renderSettings(); } }
-        async function addTagConfig() { const form = await createBadgePrompt('สร้างป้าย Tag'); if (form?.label) { DB.tags.push({ id: 't'+Date.now(), ...form }); saveDB(); renderSettings(); } }
-        async function addClub() {
-            const { value: name } = await Swal.fire({ title: 'เพิ่มสาขา', input: 'text', inputPlaceholder: 'ชื่อสาขา', background: '#1e293b', color: '#fff' });
-            if (name) { DB.clubs.push({ id: 'c'+Date.now(), name: name, times: ['00:00', '01:00', '02:00'] }); saveDB(); renderSettings(); }
-        }
-
-        // --- 8. ระบบเชื่อมโยง Google Sheets (CSV Import/Export) ---
-        function openSyncModal() {
-            Swal.fire({
-                title: 'ซิงค์ข้อมูลฐานข้อมูล (CSV)',
-                html: `
-                    <div class="text-left space-y-4 mt-4">
-                        <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                            <h4 class="font-bold text-emerald-400 mb-2"><i class="fa-solid fa-download mr-2"></i>ส่งออกข้อมูล (Export to CSV)</h4>
-                            <p class="text-xs text-slate-400 mb-3">ดาวน์โหลดข้อมูลการเช็คชื่อวันนี้ เพื่อนำไปเปิดใน Google Sheets หรือ Excel</p>
-                            <button onclick="exportToCSV()" class="w-full bg-slate-700 hover:bg-slate-600 text-white py-2 rounded-lg transition text-sm">ดาวน์โหลดไฟล์ CSV</button>
-                        </div>
-
-                        <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                            <h4 class="font-bold text-blue-400 mb-2"><i class="fa-solid fa-upload mr-2"></i>นำเข้าข้อมูลพนักงาน (Import from CSV)</h4>
-                            <p class="text-xs text-slate-400 mb-3">อัปเดตฐานข้อมูลพนักงานจากไฟล์ CSV (คอลัมน์: รหัสพนักงาน, ชื่อ, รหัสสาขา)</p>
-                            <input type="file" id="csvFileInput" accept=".csv" class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500"/>
-                        </div>
-                    </div>
-                `,
-                background: '#1e293b', color: '#fff', showCancelButton: true, showConfirmButton: false
-            });
-
-            // ตรวจจับการอัปโหลดไฟล์
-            document.getElementById('csvFileInput').addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const text = event.target.result;
-                    processCSVImport(text);
-                };
-                reader.readAsText(file);
-            });
-        }
-
-        // ฟังก์ชันส่งออก CSV (เชื่อม Google Sheets ทางอ้อมแบบ Manual Sync)
-        function exportToCSV() {
-            const activeClub = DB.clubs.find(c => c.id === APP.activeClubId);
-            const times = activeClub.times;
-            const emps = DB.employees.filter(emp => emp.clubId === activeClub.id);
-            const todayRecords = (DB.records[APP.currentDate] && DB.records[APP.currentDate][activeClub.id]) || {};
-            
-            let csvContent = "\uFEFF"; // รองรับภาษาไทย (BOM)
-            csvContent += `No.,รหัส,ชื่อพนักงาน,Tags,${times.join(',')},หมายเหตุ\n`;
-
-            emps.forEach((emp, index) => {
-                const record = todayRecords[emp.id] || { times: {}, remark: '' };
-                const tagsText = emp.tags.map(tId => DB.tags.find(t=>t.id===tId)?.label || '').join(' ');
-                
-                let row = [ index + 1, emp.code, emp.name, tagsText ];
-                times.forEach(t => {
-                    const stateId = record.times[t]?.stateId;
-                    const stateLabel = stateId ? DB.states.find(s=>s.id===stateId)?.label : '';
-                    row.push(stateLabel || '');
-                });
-                row.push(record.remark || '');
-                csvContent += row.join(',') + "\n";
-            });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `Attendance_${activeClub.name}_${APP.currentDate}.csv`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        // ฟังก์ชันอ่าน CSV เพื่ออัปเดต Database พนักงาน
-        function processCSVImport(csvText) {
-            // สมมติโครงสร้าง CSV ที่รับเข้ามา: รหัส, ชื่อ, รหัสสาขา (c1, c2, c3)
-            const lines = csvText.split('\n');
-            let addedCount = 0;
-            
-            for(let i = 1; i < lines.length; i++) { // ข้าม Header row 0
-                const row = lines[i].split(',');
-                if(row.length >= 3 && row[0].trim() !== "") {
-                    const code = row[0].trim();
-                    const name = row[1].trim();
-                    let clubId = row[2].trim();
                     
-                    // เช็คว่ามีสาขานี้ไหม ถ้าไม่มีใส่อันแรก
-                    if(!DB.clubs.find(c=>c.id===clubId)) clubId = DB.clubs[0].id;
+                    <form id="form-atmosphere" onsubmit="saveAtmosphere(event)" class="hidden space-y-4 bg-gray-50 p-6 rounded-xl border border-gray-200 mb-6">
+                        <input type="hidden" id="atm-id" />
+                        <div><label class="block text-sm font-semibold mb-1">ลิงก์รูปภาพ (รองรับ Google Drive)</label><input type="url" id="atm-image" required class="input-field" placeholder="https://..." /></div>
+                        <div><label class="block text-sm font-semibold mb-1">คำบรรยายรูปภาพ</label><input type="text" id="atm-caption" class="input-field" /></div>
+                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                            <button type="button" onclick="closeForms()" class="px-5 py-2.5 font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition shadow-sm">ยกเลิก</button>
+                            <button type="submit" class="px-5 py-2.5 font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center transition shadow-md"><i data-lucide="save" class="w-5 h-5 mr-2"></i> บันทึก</button>
+                        </div>
+                    </form>
 
-                    // เช็คว่ามีคนนี้อยู่แล้วไหม ถ้าไม่มีให้เพิ่ม
-                    if(!DB.employees.find(e=>e.code === code)) {
-                        DB.employees.push({ id: 'e'+Date.now()+i, code: code, name: name, clubId: clubId, tags: [], startDate: '', endDate: '' });
-                        addedCount++;
-                    }
-                }
+                    <div id="admin-atm-list" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
+                </div>
+
+                <!-- TAB CONTENT: NOTICE -->
+                <div id="content-notice" class="tab-content hidden fade-in">
+                    <div class="flex justify-between items-center mb-6 border-b pb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">จัดการบอร์ดประกาศ</h2>
+                        <button id="btn-add-notice" onclick="openNoticeForm()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center font-bold shadow-sm transition"><i data-lucide="plus" class="w-5 h-5 mr-1"></i> เพิ่มใหม่</button>
+                    </div>
+
+                    <form id="form-notice" onsubmit="saveNotice(event)" class="hidden space-y-4 bg-gray-50 p-6 rounded-xl border border-gray-200 mb-6">
+                        <input type="hidden" id="notice-id" />
+                        <div><label class="block text-sm font-semibold mb-1">ข้อความประกาศ</label><textarea id="notice-text" required rows="3" class="input-field"></textarea></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-sm font-semibold mb-1">ข้อความปุ่มลิงก์ (เว้นว่างได้)</label><input type="text" id="notice-btn-text" class="input-field" placeholder="เช่น: ดูโปรโมชั่น" /></div>
+                            <div><label class="block text-sm font-semibold mb-1">URL ปลายทาง (เว้นว่างได้)</label><input type="url" id="notice-url" class="input-field" placeholder="https://..." /></div>
+                        </div>
+                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                            <button type="button" onclick="closeForms()" class="px-5 py-2.5 font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition shadow-sm">ยกเลิก</button>
+                            <button type="submit" class="px-5 py-2.5 font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center transition shadow-md"><i data-lucide="save" class="w-5 h-5 mr-2"></i> บันทึก</button>
+                        </div>
+                    </form>
+
+                    <div id="admin-notice-list" class="space-y-3"></div>
+                </div>
+
+                <!-- TAB CONTENT: CONTACT -->
+                <div id="content-contact" class="tab-content hidden fade-in max-w-2xl">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">ตั้งค่าข้อมูลติดต่อ</h2>
+                    <form onsubmit="saveContact(event)" class="space-y-5">
+                        <div><label class="block text-sm font-semibold mb-1">ข้อความที่อยู่ร้าน</label><input type="text" id="ct-addr-text" required class="input-field" /></div>
+                        <div><label class="block text-sm font-semibold mb-1">ลิงก์ Google Maps</label><input type="url" id="ct-addr-url" required class="input-field" /></div>
+                        <div><label class="block text-sm font-semibold mb-1">เบอร์โทรศัพท์</label><input type="text" id="ct-phone" required class="input-field" /></div>
+                        <div class="pt-4 border-t">
+                            <label class="block text-sm font-semibold mb-1 text-blue-700 flex items-center">ลิงก์ Facebook</label>
+                            <input type="url" id="ct-fb" required class="input-field border-blue-200 focus:border-blue-500" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-1 text-green-700 flex items-center">ลิงก์ Line Official</label>
+                            <input type="url" id="ct-line" required class="input-field border-green-200 focus:border-green-500" />
+                        </div>
+                        <button type="submit" class="mt-4 px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 flex items-center transition shadow-md">
+                            <i data-lucide="save" class="h-5 w-5 mr-2"></i> บันทึกข้อมูลติดต่อ
+                        </button>
+                    </form>
+                </div>
+
+                <!-- TAB CONTENT: SETTINGS -->
+                <div id="content-settings" class="tab-content hidden fade-in max-w-3xl">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">ตั้งค่าโลโก้ และหน้าปกเว็บ</h2>
+                    <form onsubmit="saveSettings(event)" class="space-y-6">
+                        <div class="bg-gray-50 p-5 rounded-xl border border-gray-200 flex items-start space-x-6">
+                            <div class="shrink-0">
+                                <label class="block text-sm font-semibold mb-2">โลโก้ร้าน (Logo)</label>
+                                <img id="set-logo-preview" src="" class="w-24 h-24 object-cover rounded-full border-4 border-white shadow-md bg-white" onerror="this.style.display='none'" />
+                            </div>
+                            <div class="flex-1 mt-6">
+                                <input type="text" id="set-logo" required class="input-field" placeholder="ใส่ชื่อไฟล์ภาพ หรือ ลิงก์" oninput="document.getElementById('set-logo-preview').src=convertDriveUrl(this.value); document.getElementById('set-logo-preview').style.display='block';" />
+                                <p class="text-xs text-gray-500 mt-1">สามารถใส่ชื่อไฟล์เช่น `image.png` หรือลิงก์ Google Drive</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
+                            <label class="block text-sm font-semibold mb-2">ภาพหน้าปก (Hero Image)</label>
+                            <input type="url" id="set-hero-img" required class="input-field mb-3" oninput="document.getElementById('set-hero-preview').src=convertDriveUrl(this.value)" />
+                            <div class="h-40 rounded-xl overflow-hidden shadow-inner bg-gray-200 w-full relative">
+                                <img id="set-hero-preview" src="" alt="Hero" class="w-full h-full object-cover" onerror="this.style.display='none'" onload="this.style.display='block'" />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label class="block text-sm font-semibold mb-1">หัวข้อหลักบนภาพปก</label><input type="text" id="set-title" required class="input-field" /></div>
+                            <div><label class="block text-sm font-semibold mb-1">คำบรรยายรอง</label><input type="text" id="set-subtitle" required class="input-field" /></div>
+                        </div>
+
+                        <button type="submit" class="w-full md:w-auto px-8 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 flex items-center justify-center transition shadow-md">
+                            <i data-lucide="save" class="h-5 w-5 mr-2"></i> บันทึกการตั้งค่า
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+            
+            <div class="md:hidden mt-6 pb-6">
+                <button onclick="handleLogout()" class="w-full flex items-center justify-center bg-gray-800 text-white py-4 rounded-xl shadow-lg font-bold">
+                    <i data-lucide="log-out" class="w-5 h-5 mr-2"></i> ออกจากระบบแอดมิน
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // --- State ---
+        const state = {
+            promotions: [
+                { id: 1, image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80', link: '#menu' },
+                { id: 2, image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80', link: 'https://facebook.com/share/1DsJYkHEQr/?mibextid=wwXIfr' }
+            ],
+            menuItems: [
+                { id: 1, name: 'ผัดไทยกุ้งสด', price: '120', image: 'https://images.unsplash.com/photo-1559314809-0d155014e29e?auto=format&fit=crop&w=500&q=80', description: 'ผัดไทยเส้นจันท์เหนียวนุ่ม กุ้งสดตัวโต พร้อมเครื่องเคียงครบชุด', recommended: true },
+                { id: 2, name: 'ข้าวกะเพราเนื้อสับไข่ดาว', price: '95', image: 'https://images.unsplash.com/photo-1626804475297-41609ea064eb?auto=format&fit=crop&w=500&q=80', description: 'เนื้อสับผัดกะเพรารสจัดจ้าน เสิร์ฟพร้อมข้าวสวยร้อนๆ และไข่ดาว', recommended: false },
+                { id: 3, name: 'ต้มยำกุ้งน้ำข้น', price: '180', image: 'https://images.unsplash.com/photo-1548943487-a2e4f43b4859?auto=format&fit=crop&w=500&q=80', description: 'ต้มยำกุ้งแม่น้ำ รสชาติเข้มข้น หอมเครื่องต้มยำแท้ๆ', recommended: true },
+            ],
+            atmospheres: [
+                { id: 1, image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80', caption: 'บรรยากาศที่นั่งด้านใน' },
+                { id: 2, image: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=800&q=80', caption: 'มุมสำหรับครอบครัว' },
+            ],
+            notices: [
+                { id: 1, text: 'โปรโมชั่นพิเศษ! ลด 10% ทุกเมนูเมื่อทานอาหารที่ร้านครบ 1,000 บาท ตลอดเดือนนี้', linkText: 'ดูเมนู', linkUrl: '#menu' },
+                { id: 2, text: 'ร้านเปิดให้บริการทุกวัน ตั้งแต่เวลา 10:00 - 22:00 น. ยินดีต้อนรับทุกท่านครับ', linkText: '', linkUrl: '' },
+            ],
+            contact: {
+                addressText: 'ร้านอาหารเฟรนลี่เรสเตอรอง',
+                addressLink: 'https://maps.app.goo.gl/LWPaJMe25AcdZSBr8?g_st=ic',
+                phone: '098-314-5769',
+                facebook: 'https://www.facebook.com/share/1DsJYkHEQr/?mibextid=wwXIfr',
+                line: 'https://line.me/ti/p/'
+            },
+            settings: {
+                logo: 'image.png',
+                heroImage: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1920&q=80',
+                title: 'ยินดีต้อนรับสู่ Friendly Restaurant',
+                subtitle: 'อาหารอร่อย บรรยากาศดี บริการเป็นกันเอง'
             }
-            saveDB();
-            renderApp();
-            Swal.fire({icon: 'success', title: `นำเข้าสำเร็จ!`, text: `เพิ่มพนักงานใหม่ ${addedCount} คน`, background: '#1e293b', color: '#fff'});
+        };
+
+        let promoTimer = null;
+
+        // --- Helpers ---
+        function convertDriveUrl(url) {
+            if (!url) return '';
+            const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) {
+                return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+            }
+            return url;
         }
 
-        // ================= เริ่มการทำงานเมื่อโหลดหน้าเว็บ =================
-        updateUI_Auth();
+        // --- UI Interactions ---
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        function showPinModal() {
+            document.getElementById('pin-modal').classList.remove('hidden');
+            document.getElementById('pin-input').focus();
+        }
+
+        function hidePinModal() {
+            document.getElementById('pin-modal').classList.add('hidden');
+            document.getElementById('pin-input').value = '';
+            document.getElementById('pin-error').classList.add('hidden');
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const pin = document.getElementById('pin-input').value;
+            const btn = document.getElementById('btn-login');
+            btn.innerHTML = 'กำลังตรวจสอบ...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                if (pin === '000000') {
+                    document.getElementById('frontend-view').classList.add('hidden');
+                    document.getElementById('admin-view').classList.remove('hidden');
+                    hidePinModal();
+                    renderAllAdmin();
+                    clearInterval(promoTimer);
+                } else {
+                    document.getElementById('pin-error').classList.remove('hidden');
+                }
+                btn.innerHTML = 'เข้าสู่ระบบ';
+                btn.disabled = false;
+            }, 500);
+        }
+
+        function handleLogout() {
+            document.getElementById('admin-view').classList.add('hidden');
+            document.getElementById('frontend-view').classList.remove('hidden');
+            renderFrontend();
+            window.scrollTo(0,0);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.admin-tab').forEach(el => {
+                el.classList.remove('bg-red-600', 'text-white', 'md:border-l-4', 'md:border-white', 'shadow-md');
+                el.classList.add('text-gray-300', 'hover:bg-gray-800', 'hover:text-white', 'md:border-transparent');
+            });
+
+            document.getElementById(`content-${tabId}`).classList.remove('hidden');
+            const activeTabBtn = document.getElementById(`tab-${tabId}`);
+            activeTabBtn.classList.remove('text-gray-300', 'hover:bg-gray-800', 'hover:text-white', 'md:border-transparent');
+            activeTabBtn.classList.add('bg-red-600', 'text-white', 'md:border-l-4', 'md:border-white', 'shadow-md');
+            
+            closeForms();
+        }
+
+        // --- Promotions Carousel Logic ---
+        function initPromoSlider() {
+            const track = document.getElementById('promo-track');
+            if(!track || state.promotions.length === 0) return;
+
+            // Auto slide every 3 seconds
+            clearInterval(promoTimer);
+            promoTimer = setInterval(() => {
+                const maxScrollLeft = track.scrollWidth - track.clientWidth;
+                if(track.scrollLeft >= maxScrollLeft - 10) { 
+                    track.scrollTo({ left: 0, behavior: 'smooth' });
+                } else {
+                    track.scrollBy({ left: track.clientWidth, behavior: 'smooth' });
+                }
+            }, 3000);
+
+            // Pause on hover or touch
+            track.onmouseenter = () => clearInterval(promoTimer);
+            track.onmouseleave = () => initPromoSlider();
+            track.ontouchstart = () => clearInterval(promoTimer);
+            track.ontouchend = () => initPromoSlider();
+
+            // Drag to scroll for Desktop
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            track.addEventListener('mousedown', (e) => {
+                isDown = true;
+                track.classList.add('active');
+                startX = e.pageX - track.offsetLeft;
+                scrollLeft = track.scrollLeft;
+            });
+            track.addEventListener('mouseleave', () => { isDown = false; });
+            track.addEventListener('mouseup', () => { isDown = false; });
+            track.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - track.offsetLeft;
+                const walk = (x - startX) * 2; 
+                track.scrollLeft = scrollLeft - walk;
+            });
+        }
+
+        // --- Render Frontend ---
+        function renderFrontend() {
+            // Settings
+            const set = state.settings;
+            document.getElementById('hero-img').src = convertDriveUrl(set.heroImage);
+            document.getElementById('hero-title').innerText = set.title;
+            document.getElementById('hero-subtitle').innerText = set.subtitle;
+            document.getElementById('footer-subtitle').innerText = set.subtitle;
+            
+            const lUrl = convertDriveUrl(set.logo);
+            ['nav-logo', 'footer-logo'].forEach(id => {
+                const img = document.getElementById(id);
+                const icon = document.getElementById(id + '-icon');
+                if(set.logo) { img.src = lUrl; img.style.display = 'block'; icon.style.display = 'none'; } 
+                else { img.style.display = 'none'; icon.style.display = 'block'; }
+            });
+
+            // Contact
+            const ct = state.contact;
+            document.getElementById('contact-address-text').innerText = ct.addressText;
+            document.getElementById('contact-address-link').href = ct.addressLink;
+            document.getElementById('contact-phone').innerText = ct.phone;
+            document.getElementById('contact-phone').href = `tel:${ct.phone.replace(/\D/g,'')}`;
+            document.getElementById('contact-facebook').href = ct.facebook;
+            document.getElementById('contact-line').href = ct.line;
+
+            // Promotions
+            const promoCont = document.getElementById('promotions-section');
+            const promoTrack = document.getElementById('promo-track');
+            if(state.promotions.length > 0) {
+                promoCont.classList.remove('hidden');
+                promoTrack.innerHTML = state.promotions.map(p => `
+                    <div class="flex-none w-[90%] md:w-[60%] lg:w-[45%] snap-center shrink-0">
+                        <a href="${p.link || '#'}" ${p.link && !p.link.startsWith('#') ? 'target="_blank"' : ''} class="block relative rounded-2xl overflow-hidden shadow-lg group">
+                            <img src="${convertDriveUrl(p.image)}" class="w-full h-48 md:h-64 object-cover transform transition duration-500 group-hover:scale-105" draggable="false" onerror="this.style.display='none'" />
+                        </a>
+                    </div>
+                `).join('');
+                setTimeout(initPromoSlider, 100); // init slider after render
+            } else {
+                promoCont.classList.add('hidden');
+            }
+
+            // Notices
+            const noticeCont = document.getElementById('notice-container');
+            const noticeList = document.getElementById('notice-list');
+            if(state.notices.length > 0) {
+                noticeCont.classList.remove('hidden');
+                noticeList.innerHTML = state.notices.map((n, i) => `
+                    <div class="p-4 ${i !== state.notices.length -1 ? 'border-b border-gray-100' : ''} flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <p class="text-gray-700 font-medium flex-1">${n.text}</p>
+                        ${n.linkText && n.linkUrl ? `<a href="${n.linkUrl}" class="shrink-0 text-sm bg-amber-100 text-amber-800 hover:bg-amber-200 px-4 py-2 rounded-lg font-bold transition inline-block text-center">${n.linkText}</a>` : ''}
+                    </div>
+                `).join('');
+            } else {
+                noticeCont.classList.add('hidden');
+            }
+
+            // Menu
+            document.getElementById('menu-grid').innerHTML = state.menuItems.map(item => `
+                <div class="bg-white rounded-2xl shadow-md overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-xl border border-gray-100 relative group">
+                    ${item.recommended ? `<div class="absolute top-4 left-4 z-10 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-md flex items-center"><i data-lucide="star" class="w-3 h-3 mr-1" style="fill:#713f12"></i> แนะนำ</div>` : ''}
+                    <div class="h-60 overflow-hidden relative">
+                        <img src="${convertDriveUrl(item.image)}" alt="${item.name}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=500&q=80'" />
+                        <div class="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-full font-bold text-red-600 shadow-lg text-lg">฿${item.price}</div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">${item.name}</h3>
+                        <p class="text-gray-600 text-sm line-clamp-2">${item.description}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            // Atmosphere
+            document.getElementById('atmosphere-grid').innerHTML = state.atmospheres.map(item => `
+                <div class="group relative rounded-2xl overflow-hidden shadow-lg aspect-video cursor-pointer">
+                    <img src="${convertDriveUrl(item.image)}" alt="${item.caption}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110" />
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 transition-opacity"></div>
+                    <div class="absolute bottom-0 left-0 right-0 p-4">
+                        <p class="text-white font-medium text-lg drop-shadow-md">${item.caption}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        // --- Render Admin ---
+        function renderAllAdmin() {
+            renderAdminPromo();
+            renderAdminMenu();
+            renderAdminAtmosphere();
+            renderAdminNotice();
+            
+            // Pop contact
+            const ct = state.contact;
+            document.getElementById('ct-addr-text').value = ct.addressText;
+            document.getElementById('ct-addr-url').value = ct.addressLink;
+            document.getElementById('ct-phone').value = ct.phone;
+            document.getElementById('ct-fb').value = ct.facebook;
+            document.getElementById('ct-line').value = ct.line;
+
+            // Pop Settings
+            const set = state.settings;
+            document.getElementById('set-logo').value = set.logo;
+            document.getElementById('set-logo-preview').src = convertDriveUrl(set.logo);
+            document.getElementById('set-hero-img').value = set.heroImage;
+            document.getElementById('set-hero-preview').src = convertDriveUrl(set.heroImage);
+            document.getElementById('set-title').value = set.title;
+            document.getElementById('set-subtitle').value = set.subtitle;
+
+            lucide.createIcons();
+        }
+
+        function renderAdminPromo() {
+            document.getElementById('admin-promo-list').innerHTML = state.promotions.map(item => `
+                <div class="flex border border-gray-200 rounded-xl p-3 items-center hover:bg-gray-50 bg-white shadow-sm">
+                    <img src="${convertDriveUrl(item.image)}" class="w-32 h-20 rounded-lg object-cover bg-gray-200 shrink-0" onerror="this.style.display='none'" />
+                    <div class="ml-4 flex-1 overflow-hidden">
+                        <p class="text-sm text-gray-500 truncate mb-1">ลิงก์: ${item.link || 'ไม่ได้ตั้งลิงก์'}</p>
+                    </div>
+                    <div class="flex flex-col space-y-2 ml-2">
+                        <button onclick="editPromo(${item.id})" class="p-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                        <button onclick="deleteItem('promo', ${item.id})" class="p-2 bg-red-50 text-red-600 rounded hover:bg-red-100"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function renderAdminMenu() {
+            document.getElementById('admin-menu-list').innerHTML = state.menuItems.map(item => `
+                <div class="flex border border-gray-200 rounded-xl p-3 items-center hover:bg-gray-50">
+                    <img src="${convertDriveUrl(item.image)}" class="w-20 h-20 rounded-lg object-cover bg-gray-200 shrink-0" onerror="this.style.display='none'" />
+                    <div class="ml-4 flex-1">
+                        <h4 class="font-bold text-lg flex items-center">${item.name} ${item.recommended ? '<i data-lucide="star" class="w-4 h-4 ml-1 text-yellow-500" style="fill:#eab308"></i>' : ''}</h4>
+                        <p class="text-red-600 font-medium">฿${item.price}</p>
+                    </div>
+                    <div class="flex flex-col space-y-2 ml-2">
+                        <button onclick="editMenu(${item.id})" class="p-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                        <button onclick="deleteItem('menu', ${item.id})" class="p-2 bg-red-50 text-red-600 rounded hover:bg-red-100"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function renderAdminAtmosphere() {
+            document.getElementById('admin-atm-list').innerHTML = state.atmospheres.map(item => `
+                <div class="relative group rounded-xl overflow-hidden shadow-sm border border-gray-200">
+                    <img src="${convertDriveUrl(item.image)}" class="w-full h-32 object-cover" />
+                    <div class="p-2 bg-white text-sm font-medium truncate">${item.caption || 'ไม่มีคำบรรยาย'}</div>
+                    <div class="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition">
+                        <button onclick="editAtmosphere(${item.id})" class="p-1.5 bg-white text-blue-600 rounded-md shadow"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                        <button onclick="deleteItem('atm', ${item.id})" class="p-1.5 bg-white text-red-600 rounded-md shadow"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function renderAdminNotice() {
+            document.getElementById('admin-notice-list').innerHTML = state.notices.map(item => `
+                <div class="p-4 border border-gray-200 rounded-xl flex justify-between items-center bg-amber-50">
+                    <div>
+                        <p class="font-medium text-amber-900">${item.text}</p>
+                        ${item.linkText ? `<span class="text-sm text-blue-600 mt-1 block">🔗 ${item.linkText} (${item.linkUrl})</span>` : ''}
+                    </div>
+                    <div class="flex space-x-2 shrink-0 ml-4">
+                        <button onclick="editNotice(${item.id})" class="p-2 bg-white text-blue-600 rounded shadow-sm hover:bg-blue-50"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                        <button onclick="deleteItem('notice', ${item.id})" class="p-2 bg-white text-red-600 rounded shadow-sm hover:bg-red-50"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        // --- Admin Forms Control ---
+        function closeForms() {
+            ['form-promo', 'form-menu', 'form-atmosphere', 'form-notice'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            ['btn-add-promo', 'btn-add-menu', 'btn-add-atm', 'btn-add-notice'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+        }
+
+        function deleteItem(type, id) {
+            if(!confirm('ยืนยันการลบข้อมูล?')) return;
+            if(type === 'promo') { state.promotions = state.promotions.filter(i => i.id !== id); renderAdminPromo(); }
+            if(type === 'menu') { state.menuItems = state.menuItems.filter(i => i.id !== id); renderAdminMenu(); }
+            if(type === 'atm') { state.atmospheres = state.atmospheres.filter(i => i.id !== id); renderAdminAtmosphere(); }
+            if(type === 'notice') { state.notices = state.notices.filter(i => i.id !== id); renderAdminNotice(); }
+        }
+
+        // Promo Form
+        function openPromoForm() {
+            document.getElementById('form-promo').reset();
+            document.getElementById('promo-id').value = '';
+            document.getElementById('promo-preview').classList.add('hidden');
+            document.getElementById('form-promo').classList.remove('hidden');
+            document.getElementById('btn-add-promo').classList.add('hidden');
+        }
+        function editPromo(id) {
+            openPromoForm();
+            const item = state.promotions.find(i => i.id === id);
+            document.getElementById('promo-id').value = item.id;
+            document.getElementById('promo-image').value = item.image;
+            document.getElementById('promo-preview').src = convertDriveUrl(item.image);
+            document.getElementById('promo-preview').classList.remove('hidden');
+            document.getElementById('promo-link').value = item.link;
+        }
+        function savePromo(e) {
+            e.preventDefault();
+            const id = document.getElementById('promo-id').value;
+            const newItem = {
+                id: id ? parseInt(id) : Date.now(),
+                image: document.getElementById('promo-image').value,
+                link: document.getElementById('promo-link').value
+            };
+            if(id) state.promotions = state.promotions.map(i => i.id === parseInt(id) ? newItem : i);
+            else state.promotions.push(newItem);
+            closeForms(); renderAdminPromo();
+        }
+
+        // Menu Form
+        function openMenuForm() {
+            document.getElementById('form-menu').reset();
+            document.getElementById('menu-id').value = '';
+            document.getElementById('menu-preview').classList.add('hidden');
+            document.getElementById('form-menu-title').innerText = '✨ เพิ่มเมนูใหม่';
+            document.getElementById('form-menu').classList.remove('hidden');
+            document.getElementById('btn-add-menu').classList.add('hidden');
+        }
+        function editMenu(id) {
+            openMenuForm();
+            const item = state.menuItems.find(i => i.id === id);
+            document.getElementById('form-menu-title').innerText = '✏️ แก้ไขเมนู';
+            document.getElementById('menu-id').value = item.id;
+            document.getElementById('menu-name').value = item.name;
+            document.getElementById('menu-price').value = item.price;
+            document.getElementById('menu-image').value = item.image;
+            document.getElementById('menu-preview').src = convertDriveUrl(item.image);
+            document.getElementById('menu-preview').classList.remove('hidden');
+            document.getElementById('menu-desc').value = item.description;
+            document.getElementById('menu-recommended').checked = item.recommended;
+        }
+        function saveMenu(e) {
+            e.preventDefault();
+            const id = document.getElementById('menu-id').value;
+            const newItem = {
+                id: id ? parseInt(id) : Date.now(),
+                name: document.getElementById('menu-name').value,
+                price: document.getElementById('menu-price').value,
+                image: document.getElementById('menu-image').value,
+                description: document.getElementById('menu-desc').value,
+                recommended: document.getElementById('menu-recommended').checked
+            };
+            if(id) state.menuItems = state.menuItems.map(i => i.id === parseInt(id) ? newItem : i);
+            else state.menuItems.push(newItem);
+            closeForms(); renderAdminMenu();
+        }
+
+        // Atmosphere Form
+        function openAtmosphereForm() {
+            document.getElementById('form-atmosphere').reset();
+            document.getElementById('atm-id').value = '';
+            document.getElementById('form-atmosphere').classList.remove('hidden');
+            document.getElementById('btn-add-atm').classList.add('hidden');
+        }
+        function editAtmosphere(id) {
+            openAtmosphereForm();
+            const item = state.atmospheres.find(i => i.id === id);
+            document.getElementById('atm-id').value = item.id;
+            document.getElementById('atm-image').value = item.image;
+            document.getElementById('atm-caption').value = item.caption;
+        }
+        function saveAtmosphere(e) {
+            e.preventDefault();
+            const id = document.getElementById('atm-id').value;
+            const newItem = {
+                id: id ? parseInt(id) : Date.now(),
+                image: document.getElementById('atm-image').value,
+                caption: document.getElementById('atm-caption').value
+            };
+            if(id) state.atmospheres = state.atmospheres.map(i => i.id === parseInt(id) ? newItem : i);
+            else state.atmospheres.push(newItem);
+            closeForms(); renderAdminAtmosphere();
+        }
+
+        // Notice Form
+        function openNoticeForm() {
+            document.getElementById('form-notice').reset();
+            document.getElementById('notice-id').value = '';
+            document.getElementById('form-notice').classList.remove('hidden');
+            document.getElementById('btn-add-notice').classList.add('hidden');
+        }
+        function editNotice(id) {
+            openNoticeForm();
+            const item = state.notices.find(i => i.id === id);
+            document.getElementById('notice-id').value = item.id;
+            document.getElementById('notice-text').value = item.text;
+            document.getElementById('notice-btn-text').value = item.linkText;
+            document.getElementById('notice-url').value = item.linkUrl;
+        }
+        function saveNotice(e) {
+            e.preventDefault();
+            const id = document.getElementById('notice-id').value;
+            const newItem = {
+                id: id ? parseInt(id) : Date.now(),
+                text: document.getElementById('notice-text').value,
+                linkText: document.getElementById('notice-btn-text').value,
+                linkUrl: document.getElementById('notice-url').value
+            };
+            if(id) state.notices = state.notices.map(i => i.id === parseInt(id) ? newItem : i);
+            else state.notices.push(newItem);
+            closeForms(); renderAdminNotice();
+        }
+
+        // Save Contact & Settings
+        function saveContact(e) {
+            e.preventDefault();
+            state.contact = {
+                addressText: document.getElementById('ct-addr-text').value,
+                addressLink: document.getElementById('ct-addr-url').value,
+                phone: document.getElementById('ct-phone').value,
+                facebook: document.getElementById('ct-fb').value,
+                line: document.getElementById('ct-line').value,
+            };
+            alert('บันทึกข้อมูลติดต่อเรียบร้อย');
+        }
+
+        function saveSettings(e) {
+            e.preventDefault();
+            state.settings = {
+                logo: document.getElementById('set-logo').value,
+                heroImage: document.getElementById('set-hero-img').value,
+                title: document.getElementById('set-title').value,
+                subtitle: document.getElementById('set-subtitle').value,
+            };
+            alert('บันทึกการตั้งค่าร้านเรียบร้อย');
+        }
+
+        // Initialize App
+        window.onload = function() {
+            renderFrontend();
+        };
     </script>
 </body>
 </html>
-```eof
