@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Friendly Restaurant</title>
-    <!-- Tailwind CSS -->
+    
+    <!-- ========================================== -->
+    <!-- 📂 ส่วนของ CSS (บน Server จริงควรแยกเป็น /css/style.css) -->
+    <!-- ========================================== -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
@@ -22,25 +23,23 @@
         }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        /* Smooth scrolling */
         html { scroll-behavior: smooth; }
         
-        /* Hide Scrollbar but keep functionality */
+        /* ซ่อน Scrollbar ของ Promotion แต่ยังเลื่อนได้ */
         .hide-scroll-bar {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
+            -ms-overflow-style: none; scrollbar-width: none;
         }
-        .hide-scroll-bar::-webkit-scrollbar {
-            display: none; /* Chrome, Safari and Opera */
-        }
+        .hide-scroll-bar::-webkit-scrollbar { display: none; }
+        .promo-snap { scroll-snap-type: x mandatory; }
+        .promo-item { scroll-snap-align: center; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen">
 
     <!-- ========================================== -->
-    <!-- VIEW: FRONTEND -->
+    <!-- 📂 ส่วนของ HTML FRONTEND (หน้าบ้าน) -->
     <!-- ========================================== -->
-    <div id="frontend-view" class="min-h-screen">
+    <div id="frontend-view" class="flex-1 flex flex-col">
         <!-- Navigation -->
         <nav class="bg-white shadow-md fixed w-full z-50 transition-all duration-300">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -53,107 +52,118 @@
                         </span>
                     </div>
                     
-                    <!-- Desktop Menu -->
                     <div class="hidden md:flex items-center space-x-6">
-                        <a href="#home" class="text-gray-600 hover:text-red-600 font-medium">หน้าแรก</a>
-                        <a href="#promotions-section" class="text-gray-600 hover:text-red-600 font-medium">โปรโมชั่น</a>
-                        <a href="#menu" class="text-gray-600 hover:text-red-600 font-medium">เมนูอาหาร</a>
-                        <a href="#atmosphere" class="text-gray-600 hover:text-red-600 font-medium">บรรยากาศ</a>
-                        <a href="#contact" class="px-4 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 font-medium transition shadow-md">ติดต่อเรา</a>
+                        <a href="#home" onclick="showMainPage()" class="text-gray-600 hover:text-red-600 font-medium">หน้าแรก</a>
+                        <a href="#menu" onclick="showMainPage()" class="text-gray-600 hover:text-red-600 font-medium">เมนูอาหาร</a>
+                        <a href="#atmosphere" onclick="showMainPage()" class="text-gray-600 hover:text-red-600 font-medium">บรรยากาศ</a>
+                        <a href="#contact" onclick="showMainPage()" class="px-4 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 font-medium transition shadow-md">ติดต่อเรา</a>
                     </div>
 
-                    <!-- Mobile Menu Button -->
                     <div class="md:hidden flex items-center">
                         <button onclick="toggleMobileMenu()" class="text-gray-600 hover:text-red-600">
-                            <i data-lucide="menu" id="mobile-menu-icon" class="w-7 h-7"></i>
+                            <i data-lucide="menu" class="w-7 h-7"></i>
                         </button>
                     </div>
                 </div>
             </div>
             
-            <!-- Mobile Menu -->
             <div id="mobile-menu" class="hidden md:hidden bg-white border-t shadow-lg absolute w-full">
                 <div class="px-4 pt-2 pb-6 space-y-2">
-                    <a href="#home" onclick="toggleMobileMenu()" class="block py-3 border-b text-gray-700 font-medium">หน้าแรก</a>
-                    <a href="#promotions-section" onclick="toggleMobileMenu()" class="block py-3 border-b text-gray-700 font-medium">โปรโมชั่น</a>
-                    <a href="#menu" onclick="toggleMobileMenu()" class="block py-3 border-b text-gray-700 font-medium">เมนูอาหาร</a>
-                    <a href="#atmosphere" onclick="toggleMobileMenu()" class="block py-3 border-b text-gray-700 font-medium">บรรยากาศภายในร้าน</a>
-                    <a href="#contact" onclick="toggleMobileMenu()" class="block py-3 text-red-600 font-bold">ติดต่อเรา</a>
+                    <a href="#home" onclick="toggleMobileMenu(); showMainPage();" class="block py-3 border-b font-medium">หน้าแรก</a>
+                    <a href="#menu" onclick="toggleMobileMenu(); showMainPage();" class="block py-3 border-b font-medium">เมนูอาหาร</a>
+                    <a href="#atmosphere" onclick="toggleMobileMenu(); showMainPage();" class="block py-3 border-b font-medium">บรรยากาศ</a>
+                    <a href="#contact" onclick="toggleMobileMenu(); showMainPage();" class="block py-3 text-red-600 font-bold">ติดต่อเรา</a>
                 </div>
             </div>
         </nav>
 
-        <!-- Hero Section -->
-        <div id="home" class="relative pt-20">
-            <div class="absolute inset-0 z-0 h-[70vh] min-h-[500px]">
-                <img id="hero-img" src="" alt="Restaurant cover" class="w-full h-full object-cover" />
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/30"></div>
+        <!-- MAIN CONTENT CONTAINER -->
+        <div id="main-content">
+            <!-- Hero -->
+            <div id="home" class="relative pt-20">
+                <div class="absolute inset-0 z-0 h-[60vh] min-h-[400px]">
+                    <img id="hero-img" src="" alt="Hero" class="w-full h-full object-cover" />
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/30"></div>
+                </div>
+                <div class="relative z-10 h-[60vh] min-h-[400px] flex flex-col justify-center items-center text-center px-4">
+                    <h1 id="hero-title" class="text-4xl md:text-6xl font-bold text-white mb-6 drop-shadow-xl"></h1>
+                    <p id="hero-subtitle" class="text-xl md:text-2xl text-gray-200 mb-10 max-w-2xl drop-shadow-md"></p>
+                </div>
             </div>
-            <div class="relative z-10 h-[70vh] min-h-[500px] flex flex-col justify-center items-center text-center px-4">
-                <h1 id="hero-title" class="text-4xl md:text-6xl font-bold text-white mb-6 drop-shadow-xl"></h1>
-                <p id="hero-subtitle" class="text-xl md:text-2xl text-gray-200 mb-10 max-w-2xl drop-shadow-md"></p>
-                <div class="flex space-x-4">
-                    <a href="#menu" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full transition transform hover:scale-105 shadow-lg">ดูเมนูของเรา</a>
-                    <a href="#contact" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white border border-white/50 font-bold py-3 px-8 rounded-full transition shadow-lg">ข้อมูลติดต่อ</a>
+
+            <!-- Promotions Carousel -->
+            <div id="promotions" class="py-8 bg-white hidden">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center"><i data-lucide="ticket" class="text-red-600 mr-2 w-6 h-6"></i> โปรโมชั่นพิเศษ</h2>
+                    <div class="relative w-full overflow-hidden">
+                        <div id="promo-track" class="flex overflow-x-auto promo-snap hide-scroll-bar gap-4 pb-4 cursor-grab active:cursor-grabbing">
+                            <!-- Promotions injected here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menu -->
+            <div id="menu" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-gray-50">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">เมนูอาหาร</h2>
+                    <div class="w-24 h-1 bg-red-600 mx-auto rounded-full"></div>
+                </div>
+                <div id="menu-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+            </div>
+
+            <!-- Atmosphere -->
+            <div id="atmosphere" class="bg-white py-16">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center mb-12">
+                        <h2 class="text-3xl font-bold text-gray-900 mb-4">บรรยากาศภายในร้าน</h2>
+                        <div class="w-24 h-1 bg-red-600 mx-auto rounded-full"></div>
+                    </div>
+                    <div id="atmosphere-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+                </div>
+            </div>
+
+            <!-- Notice Board (Moved to Bottom) -->
+            <div id="notice-container" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-20 hidden">
+                <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                    <div class="bg-amber-400 text-amber-900 px-6 py-4 flex items-center font-bold text-lg">
+                        <i data-lucide="megaphone" class="mr-2 h-6 w-6"></i> บอร์ดประกาศจากทางร้าน
+                    </div>
+                    <div id="notice-list" class="p-2"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Promotions Section (New) -->
-        <div id="promotions-section" class="py-16 bg-white hidden">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center justify-between mb-8">
-                    <h2 class="text-3xl font-bold text-gray-900 flex items-center">
-                        <i data-lucide="ticket" class="w-8 h-8 mr-3 text-red-600"></i> โปรโมชั่นพิเศษ
-                    </h2>
-                </div>
-                
-                <!-- Carousel Container -->
-                <div class="relative w-full">
-                    <div id="promo-track" class="flex overflow-x-auto snap-x snap-mandatory hide-scroll-bar gap-4 pb-4 cursor-grab active:cursor-grabbing">
-                        <!-- Promotion items will be injected here -->
+        <!-- MENU DETAIL PAGE (Hidden by default) -->
+        <div id="menu-detail-page" class="hidden flex-1 bg-gray-50 pt-28 pb-16 px-4">
+            <div class="max-w-5xl mx-auto fade-in">
+                <button onclick="showMainPage()" class="mb-8 flex items-center text-gray-600 hover:text-red-600 font-bold bg-white px-5 py-2.5 rounded-full shadow-sm border border-gray-200 transition">
+                    <i data-lucide="arrow-left" class="mr-2 w-5 h-5"></i> ย้อนกลับไปหน้าหลัก
+                </button>
+                <div class="bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col md:flex-row">
+                    <div class="w-full md:w-1/2 bg-gray-100">
+                        <img id="detail-img" src="" class="w-full h-full object-cover aspect-square md:aspect-auto" />
+                    </div>
+                    <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+                        <div id="detail-recommended" class="hidden inline-flex mb-4 bg-yellow-400 text-yellow-900 text-sm font-bold px-4 py-1.5 rounded-full shadow-sm items-center w-max">
+                            <i data-lucide="star" class="w-4 h-4 mr-1" style="fill: currentColor"></i> เมนูแนะนำ
+                        </div>
+                        <h1 id="detail-name" class="text-3xl md:text-5xl font-bold text-gray-900 mb-4"></h1>
+                        <div id="detail-price" class="text-3xl font-bold text-red-600 mb-8 inline-block bg-red-50 px-6 py-2 rounded-xl border border-red-100 w-max"></div>
+                        <h3 class="text-lg font-bold text-gray-800 mb-2 border-b pb-2">รายละเอียด</h3>
+                        <p id="detail-desc" class="text-gray-600 text-lg leading-relaxed"></p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Menu Section -->
-        <div id="menu" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-gray-50">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">เมนูอาหาร</h2>
-                <div class="w-24 h-1 bg-red-600 mx-auto rounded-full"></div>
-            </div>
-            <div id="menu-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"></div>
-        </div>
-
-        <!-- Atmosphere Section -->
-        <div id="atmosphere" class="bg-white py-16">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="text-center mb-12">
-                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">บรรยากาศภายในร้าน</h2>
-                    <div class="w-24 h-1 bg-red-600 mx-auto rounded-full"></div>
-                </div>
-                <div id="atmosphere-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-            </div>
-        </div>
-
-        <!-- Notice Board Section (Moved to Bottom) -->
-        <div id="notice-container" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-20 hidden">
-            <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                <div class="bg-amber-400 text-amber-900 px-6 py-4 flex items-center font-bold text-lg">
-                    <i data-lucide="megaphone" class="mr-2 h-6 w-6"></i> บอร์ดประกาศจากทางร้าน
-                </div>
-                <div id="notice-list" class="p-2"></div>
-            </div>
-        </div>
-
-        <!-- Footer / Contact -->
-        <footer id="contact" class="bg-gray-900 text-white pt-16 pb-8">
+        <!-- Footer -->
+        <footer id="contact" class="bg-gray-900 text-white pt-16 pb-8 mt-auto">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
                     <div>
                         <div class="flex items-center mb-4">
-                            <img id="footer-logo" src="" alt="Logo" class="h-10 w-10 object-cover rounded-full mr-3 border border-gray-700 bg-white hidden" onerror="this.style.display='none'" />
+                            <img id="footer-logo" src="" class="h-10 w-10 object-cover rounded-full mr-3 bg-white hidden" />
                             <i id="footer-logo-icon" data-lucide="chef-hat" class="h-8 w-8 text-red-500 mr-2"></i>
                             <span class="font-bold text-2xl tracking-tight"><span class="text-red-500">Friendly</span> Restaurant</span>
                         </div>
@@ -161,762 +171,474 @@
                     </div>
                     <div>
                         <h3 class="text-lg font-bold mb-4 text-white border-b border-gray-700 pb-2">ติดต่อเรา</h3>
-                        <ul class="space-y-4 text-gray-300">
-                            <li>
-                                <a id="contact-address-link" href="#" target="_blank" class="flex items-start hover:text-red-400 transition group">
-                                    <i data-lucide="map-pin" class="h-5 w-5 mr-3 text-red-500 shrink-0 mt-0.5 group-hover:scale-110 transition-transform"></i> 
-                                    <span id="contact-address-text"></span>
-                                </a>
-                            </li>
-                            <li class="flex items-center">
-                                <i data-lucide="phone" class="h-5 w-5 mr-3 text-red-500"></i> 
-                                <a id="contact-phone" href="#" class="hover:text-red-400 transition"></a>
-                            </li>
-                        </ul>
+                        <ul id="contact-list" class="space-y-4 text-gray-300"></ul>
                     </div>
                     <div>
                         <h3 class="text-lg font-bold mb-4 text-white border-b border-gray-700 pb-2">ติดตามเรา</h3>
-                        <div class="flex flex-col space-y-4 pt-2">
-                            <!-- Official Facebook Icon -->
-                            <a id="contact-facebook" href="#" target="_blank" class="flex items-center text-gray-300 hover:text-white transition group">
-                                <div class="bg-white p-2.5 rounded-lg group-hover:bg-blue-50 transition mr-4 shadow-sm">
-                                    <svg class="w-6 h-6 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" /></svg>
-                                </div>
-                                <span class="font-medium">Facebook : Friendly Restaurant</span>
-                            </a>
-                            <!-- Official LINE Icon -->
-                            <a id="contact-line" href="#" target="_blank" class="flex items-center text-gray-300 hover:text-white transition group">
-                                <div class="bg-[#00B900] p-2.5 rounded-lg group-hover:bg-[#00a000] transition mr-4 shadow-sm text-white">
-                                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.036 9.608.391.084.922.258 1.057.592.122.303.079.778.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.647 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.572-3.843 2.572-5.992zm-18.988-2.595h2.608c.253 0 .458.205.458.458v.918c0 .253-.205.458-.458.458h-1.69v1.69h1.69c.253 0 .458.205.458.458v.917c0 .253-.205.458-.458.458H5.012c-.253 0-.458-.205-.458-.458v-4.444c0-.253.205-.457.458-.457zm6.837 4.903c0 .253-.205.458-.458.458h-2.608c-.253 0-.458-.205-.458-.458v-4.444c0-.253.205-.457.458-.457h2.608c.253 0 .458.205.458.458v.918c0 .253-.205.458-.458.458h-1.69v.842h1.69c.253 0 .458.205.458.458v.917zm2.464 0c0 .253-.205.458-.458.458h-.917c-.253 0-.458-.205-.458-.458v-4.444c0-.253.205-.457.458-.457h.917c.253 0 .458.205.458.458v4.444zm6.059 0c0 .253-.205.458-.458.458h-2.608c-.253 0-.458-.205-.458-.458v-4.444c0-.253.205-.457.458-.457h2.608c.253 0 .458.205.458.458v.918c0 .253-.205.458-.458.458h-1.69v.842h1.69c.253 0 .458.205.458.458v.917z"/></svg>
-                                </div>
-                                <span class="font-medium">Line Official</span>
-                            </a>
-                        </div>
+                        <div id="social-list" class="flex flex-col space-y-4 pt-2"></div>
                     </div>
                 </div>
                 <div class="border-t border-gray-800 pt-8 text-center text-gray-500 text-sm">
-                    <p>Copyright © 2026 <span class="cursor-pointer hover:text-white transition inline-block px-2" onclick="showPinModal()">Friendly Group</span>. All rights reserved.</p>
+                    <p>Copyright © 2026 <span class="cursor-pointer hover:text-white transition px-2" onclick="showPinModal()">Friendly Group</span>. All rights reserved.</p>
                 </div>
             </div>
         </footer>
     </div>
 
-    <!-- ========================================== -->
-    <!-- PIN MODAL -->
-    <!-- ========================================== -->
+    <!-- Login Modal -->
     <div id="pin-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] px-4 hidden">
         <div class="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl relative fade-in">
-            <button onclick="hidePinModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 bg-gray-100 rounded-full p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button onclick="hidePinModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700"><i data-lucide="x"></i></button>
             <div class="text-center mb-6">
-                <div class="bg-red-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100">
-                    <i data-lucide="lock" class="h-8 w-8 text-red-600"></i>
-                </div>
-                <h3 class="text-2xl font-bold text-gray-900">Admin Login</h3>
-                <p class="text-gray-500 text-sm mt-1">กรุณาใส่รหัส PIN เพื่อจัดการร้าน</p>
+                <div class="bg-red-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="lock" class="h-8 w-8 text-red-600"></i></div>
+                <h3 class="text-2xl font-bold">Admin Login</h3>
             </div>
             <form onsubmit="handleLogin(event)">
-                <div class="mb-6">
-                    <input type="password" id="pin-input" maxlength="6" placeholder="รหัส PIN 6 หลัก" class="w-full text-center text-3xl tracking-widest border-2 border-gray-200 rounded-xl px-4 py-4 focus:outline-none focus:border-red-500 focus:ring-4 focus:ring-red-100 transition shadow-inner font-mono" autofocus />
-                    <p id="pin-error" class="text-red-500 text-sm text-center mt-2 font-medium hidden">รหัส PIN ไม่ถูกต้อง</p>
-                </div>
-                <button type="submit" id="btn-login" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl transition shadow-lg flex items-center justify-center">
-                    เข้าสู่ระบบ
-                </button>
+                <input type="password" id="pin-input" maxlength="6" placeholder="รหัส PIN 6 หลัก" class="w-full text-center text-3xl tracking-widest border-2 border-gray-200 rounded-xl px-4 py-4 mb-4 font-mono" autofocus />
+                <p id="pin-error" class="text-red-500 text-sm text-center mb-4 hidden">รหัส PIN ไม่ถูกต้อง</p>
+                <button type="submit" id="btn-login" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl">เข้าสู่ระบบ</button>
             </form>
         </div>
     </div>
 
     <!-- ========================================== -->
-    <!-- VIEW: ADMIN BACKEND -->
+    <!-- 📂 ส่วนของ HTML BACKEND (หน้าหลังบ้าน) -->
     <!-- ========================================== -->
-    <div id="admin-view" class="min-h-screen bg-gray-50 font-sans flex flex-col md:flex-row hidden">
-        <!-- Admin Sidebar -->
-        <div class="w-full md:w-64 bg-gray-900 text-white shrink-0 shadow-xl flex flex-col md:min-h-screen z-10 sticky top-0">
-            <div class="p-6 flex items-center border-b border-gray-800">
-                <i data-lucide="lock" class="text-red-500 mr-3 w-6 h-6"></i>
-                <span class="font-bold text-xl">ระบบจัดการร้าน</span>
+    <div id="admin-view" class="min-h-screen bg-gray-50 hidden flex-col md:flex-row">
+        <div class="w-full md:w-64 bg-gray-900 text-white shrink-0 shadow-xl flex flex-col md:min-h-screen sticky top-0">
+            <div class="p-6 flex items-center border-b border-gray-800"><i data-lucide="lock" class="text-red-500 mr-3"></i><span class="font-bold text-xl">ระบบจัดการร้าน</span></div>
+            <div class="flex-1 py-4 flex flex-row md:flex-col overflow-x-auto px-2 space-x-1 md:space-x-0 md:space-y-1">
+                <button onclick="switchTab('promo')" id="tab-promo" class="admin-tab active flex items-center px-4 py-3 md:px-6 md:py-4 rounded-lg bg-red-600 text-white"><i data-lucide="ticket" class="mr-3 w-5 h-5"></i> โปรโมชั่น</button>
+                <button onclick="switchTab('menu')" id="tab-menu" class="admin-tab flex items-center px-4 py-3 md:px-6 md:py-4 rounded-lg text-gray-300"><i data-lucide="menu" class="mr-3 w-5 h-5"></i> เมนูอาหาร</button>
+                <button onclick="switchTab('atm')" id="tab-atm" class="admin-tab flex items-center px-4 py-3 md:px-6 md:py-4 rounded-lg text-gray-300"><i data-lucide="image" class="mr-3 w-5 h-5"></i> บรรยากาศร้าน</button>
+                <button onclick="switchTab('notice')" id="tab-notice" class="admin-tab flex items-center px-4 py-3 md:px-6 md:py-4 rounded-lg text-gray-300"><i data-lucide="megaphone" class="mr-3 w-5 h-5"></i> บอร์ดประกาศ</button>
+                <button onclick="switchTab('contact')" id="tab-contact" class="admin-tab flex items-center px-4 py-3 md:px-6 md:py-4 rounded-lg text-gray-300"><i data-lucide="phone" class="mr-3 w-5 h-5"></i> ติดต่อ/โซเชียล</button>
+                <button onclick="switchTab('settings')" id="tab-settings" class="admin-tab flex items-center px-4 py-3 md:px-6 md:py-4 rounded-lg text-gray-300"><i data-lucide="settings" class="mr-3 w-5 h-5"></i> ตั้งค่าทั่วไป</button>
             </div>
-            <div class="flex-1 py-4 flex flex-row md:flex-col overflow-x-auto md:overflow-visible px-2 md:px-0 space-x-1 md:space-x-0 md:space-y-1 pb-4">
-                <button onclick="switchTab('promo')" id="tab-promo" class="admin-tab flex items-center px-4 py-3 md:px-6 md:py-4 rounded-lg md:rounded-none whitespace-nowrap transition-colors font-medium text-gray-300 hover:bg-gray-800 hover:text-white md:border-l-4 md:border-transparent"><i data-lucide="ticket" class="mr-3 w-5 h-5"></i> โปรโมชั่น</button>
-                <button onclick="switchTab('menu')" id="tab-menu" class="admin-tab active flex items-center px-4 py-3 md:px-6 md:py-4 rounded-lg md:rounded-none whitespace-nowrap transition-colors font-medium bg-red-600 text-white md:border-l-4 md:border-white shadow-md md:shadow-none"><i data-lucide="menu" class="mr-3 w-5 h-5"></i> เมนูอาหาร</button>
-                <button onclick="switchTab('atmosphere')" id="tab-atmosphere" class="admin-tab flex items-center px-4 py-3 md:px-6 md:py-4 rounded-lg md:rounded-none whitespace-nowrap transition-colors font-medium text-gray-300 hover:bg-gray-800 hover:text-white md:border-l-4 md:border-transparent"><i data-lucide="image" class="mr-3 w-5 h-5"></i> บรรยากาศร้าน</button>
-                <button onclick="switchTab('notice')" id="tab-notice" class="admin-tab flex items-center px-4 py-3 md:px-6 md:py-4 rounded-lg md:rounded-none whitespace-nowrap transition-colors font-medium text-gray-300 hover:bg-gray-800 hover:text-white md:border-l-4 md:border-transparent"><i data-lucide="megaphone" class="mr-3 w-5 h-5"></i> บอร์ดประกาศ</button>
-                <button onclick="switchTab('contact')" id="tab-contact" class="admin-tab flex items-center px-4 py-3 md:px-6 md:py-4 rounded-lg md:rounded-none whitespace-nowrap transition-colors font-medium text-gray-300 hover:bg-gray-800 hover:text-white md:border-l-4 md:border-transparent"><i data-lucide="phone" class="mr-3 w-5 h-5"></i> ข้อมูลติดต่อ</button>
-                <button onclick="switchTab('settings')" id="tab-settings" class="admin-tab flex items-center px-4 py-3 md:px-6 md:py-4 rounded-lg md:rounded-none whitespace-nowrap transition-colors font-medium text-gray-300 hover:bg-gray-800 hover:text-white md:border-l-4 md:border-transparent"><i data-lucide="star" class="mr-3 w-5 h-5"></i> ตั้งค่าหน้าปก</button>
-            </div>
-            <div class="p-4 border-t border-gray-800 mt-auto bg-gray-900 hidden md:block">
-                <button onclick="handleLogout()" class="w-full flex items-center justify-center bg-gray-800 hover:bg-red-600 text-white py-3 rounded-lg transition font-medium"><i data-lucide="log-out" class="w-5 h-5 mr-2"></i> ออกจากระบบ</button>
-            </div>
+            <div class="p-4 border-t border-gray-800 hidden md:block"><button onclick="handleLogout()" class="w-full bg-gray-800 hover:bg-red-600 text-white py-3 rounded-lg"><i data-lucide="log-out" class="inline w-5 h-5 mr-2"></i> ออกจากระบบ</button></div>
         </div>
 
-        <!-- Admin Content Area -->
-        <div class="flex-1 p-4 md:p-8 overflow-y-auto w-full">
+        <div class="flex-1 p-4 md:p-8 overflow-y-auto">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 max-w-5xl mx-auto min-h-[80vh]">
                 
-                <!-- TAB CONTENT: PROMOTIONS -->
-                <div id="content-promo" class="tab-content hidden fade-in">
-                    <div class="flex justify-between items-center mb-6 border-b pb-4">
-                        <h2 class="text-2xl font-bold text-gray-800">จัดการป้ายโปรโมชั่น (สไลด์ด้านบน)</h2>
-                        <button id="btn-add-promo" onclick="openPromoForm()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center font-bold shadow-sm transition"><i data-lucide="plus" class="w-5 h-5 mr-1"></i> เพิ่มป้ายใหม่</button>
-                    </div>
-                    
-                    <form id="form-promo" onsubmit="savePromo(event)" class="hidden space-y-4 bg-gray-50 p-6 rounded-xl border border-gray-200 mb-6">
-                        <input type="hidden" id="promo-id" />
-                        <div>
-                            <label class="block text-sm font-semibold mb-1">ลิงก์รูปภาพโปรโมชั่น (แนวนอน แนะนำ 16:9)</label>
-                            <input type="url" id="promo-image" required class="input-field" placeholder="https://..." oninput="document.getElementById('promo-preview').src=convertDriveUrl(this.value)" />
-                            <img id="promo-preview" src="" alt="Preview" class="mt-3 h-32 rounded-lg shadow-md object-cover hidden" onerror="this.classList.add('hidden')" onload="this.classList.remove('hidden')" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold mb-1">ลิงก์เมื่อคลิกรูปภาพ (URL ปลายทาง)</label>
-                            <input type="url" id="promo-link" class="input-field" placeholder="https://... หรือใส่ #menu" />
-                        </div>
-                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
-                            <button type="button" onclick="closeForms()" class="px-5 py-2.5 font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition shadow-sm">ยกเลิก</button>
-                            <button type="submit" class="px-5 py-2.5 font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center transition shadow-md"><i data-lucide="save" class="w-5 h-5 mr-2"></i> บันทึก</button>
-                        </div>
-                    </form>
-
-                    <div id="admin-promo-list" class="grid gap-4"></div>
-                </div>
-
-                <!-- TAB CONTENT: MENU -->
-                <div id="content-menu" class="tab-content block fade-in">
-                    <div class="flex justify-between items-center mb-6 border-b pb-4">
-                        <h2 class="text-2xl font-bold text-gray-800">จัดการเมนูอาหาร</h2>
-                        <button id="btn-add-menu" onclick="openMenuForm()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center font-bold shadow-sm transition"><i data-lucide="plus" class="w-5 h-5 mr-1"></i> เพิ่มใหม่</button>
-                    </div>
-                    
-                    <form id="form-menu" onsubmit="saveMenu(event)" class="hidden space-y-5 bg-gray-50 p-6 rounded-xl border border-gray-200 mb-6">
-                        <h3 id="form-menu-title" class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">✨ เพิ่มเมนูใหม่</h3>
-                        <input type="hidden" id="menu-id" />
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div><label class="block text-sm font-semibold mb-1">ชื่อเมนู</label><input type="text" id="menu-name" required class="input-field" /></div>
-                            <div><label class="block text-sm font-semibold mb-1">ราคา (บาท)</label><input type="number" id="menu-price" required class="input-field" /></div>
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-semibold mb-1">ลิงก์รูปภาพ (รองรับลิงก์ Google Drive)</label>
-                                <input type="url" id="menu-image" required class="input-field" placeholder="https://..." oninput="document.getElementById('menu-preview').src=convertDriveUrl(this.value)" />
-                                <img id="menu-preview" src="" alt="Preview" class="mt-3 h-32 rounded-lg shadow-md object-cover hidden" onerror="this.classList.add('hidden')" onload="this.classList.remove('hidden')" />
-                            </div>
-                            <div class="md:col-span-2"><label class="block text-sm font-semibold mb-1">รายละเอียด/คำอธิบาย</label><textarea id="menu-desc" rows="2" class="input-field"></textarea></div>
-                            <div class="md:col-span-2 flex items-center bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                                <input type="checkbox" id="menu-recommended" class="w-5 h-5 text-red-600 rounded border-gray-300 focus:ring-red-500 cursor-pointer" />
-                                <label for="menu-recommended" class="ml-3 font-bold text-yellow-900 cursor-pointer flex items-center"><i data-lucide="star" class="w-5 h-5 mr-1 text-yellow-500" style="fill:#eab308"></i> ตั้งเป็นเมนูแนะนำ</label>
-                            </div>
-                        </div>
-                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
-                            <button type="button" onclick="closeForms()" class="px-5 py-2.5 font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition shadow-sm">ยกเลิก</button>
-                            <button type="submit" class="px-5 py-2.5 font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center transition shadow-md"><i data-lucide="save" class="w-5 h-5 mr-2"></i> บันทึก</button>
-                        </div>
-                    </form>
-
-                    <div id="admin-menu-list" class="grid gap-4 md:grid-cols-2"></div>
-                </div>
-
-                <!-- TAB CONTENT: ATMOSPHERE -->
-                <div id="content-atmosphere" class="tab-content hidden fade-in">
-                    <div class="flex justify-between items-center mb-6 border-b pb-4">
-                        <h2 class="text-2xl font-bold text-gray-800">จัดการรูปภาพบรรยากาศ</h2>
-                        <button id="btn-add-atm" onclick="openAtmosphereForm()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center font-bold shadow-sm transition"><i data-lucide="plus" class="w-5 h-5 mr-1"></i> เพิ่มใหม่</button>
-                    </div>
-                    
-                    <form id="form-atmosphere" onsubmit="saveAtmosphere(event)" class="hidden space-y-4 bg-gray-50 p-6 rounded-xl border border-gray-200 mb-6">
-                        <input type="hidden" id="atm-id" />
-                        <div><label class="block text-sm font-semibold mb-1">ลิงก์รูปภาพ (รองรับ Google Drive)</label><input type="url" id="atm-image" required class="input-field" placeholder="https://..." /></div>
-                        <div><label class="block text-sm font-semibold mb-1">คำบรรยายรูปภาพ</label><input type="text" id="atm-caption" class="input-field" /></div>
-                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
-                            <button type="button" onclick="closeForms()" class="px-5 py-2.5 font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition shadow-sm">ยกเลิก</button>
-                            <button type="submit" class="px-5 py-2.5 font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center transition shadow-md"><i data-lucide="save" class="w-5 h-5 mr-2"></i> บันทึก</button>
-                        </div>
-                    </form>
-
-                    <div id="admin-atm-list" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
-                </div>
-
-                <!-- TAB CONTENT: NOTICE -->
-                <div id="content-notice" class="tab-content hidden fade-in">
-                    <div class="flex justify-between items-center mb-6 border-b pb-4">
-                        <h2 class="text-2xl font-bold text-gray-800">จัดการบอร์ดประกาศ</h2>
-                        <button id="btn-add-notice" onclick="openNoticeForm()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center font-bold shadow-sm transition"><i data-lucide="plus" class="w-5 h-5 mr-1"></i> เพิ่มใหม่</button>
-                    </div>
-
-                    <form id="form-notice" onsubmit="saveNotice(event)" class="hidden space-y-4 bg-gray-50 p-6 rounded-xl border border-gray-200 mb-6">
-                        <input type="hidden" id="notice-id" />
-                        <div><label class="block text-sm font-semibold mb-1">ข้อความประกาศ</label><textarea id="notice-text" required rows="3" class="input-field"></textarea></div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><label class="block text-sm font-semibold mb-1">ข้อความปุ่มลิงก์ (เว้นว่างได้)</label><input type="text" id="notice-btn-text" class="input-field" placeholder="เช่น: ดูโปรโมชั่น" /></div>
-                            <div><label class="block text-sm font-semibold mb-1">URL ปลายทาง (เว้นว่างได้)</label><input type="url" id="notice-url" class="input-field" placeholder="https://..." /></div>
-                        </div>
-                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
-                            <button type="button" onclick="closeForms()" class="px-5 py-2.5 font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition shadow-sm">ยกเลิก</button>
-                            <button type="submit" class="px-5 py-2.5 font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center transition shadow-md"><i data-lucide="save" class="w-5 h-5 mr-2"></i> บันทึก</button>
-                        </div>
-                    </form>
-
-                    <div id="admin-notice-list" class="space-y-3"></div>
-                </div>
-
-                <!-- TAB CONTENT: CONTACT -->
-                <div id="content-contact" class="tab-content hidden fade-in max-w-2xl">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">ตั้งค่าข้อมูลติดต่อ</h2>
-                    <form onsubmit="saveContact(event)" class="space-y-5">
-                        <div><label class="block text-sm font-semibold mb-1">ข้อความที่อยู่ร้าน</label><input type="text" id="ct-addr-text" required class="input-field" /></div>
-                        <div><label class="block text-sm font-semibold mb-1">ลิงก์ Google Maps</label><input type="url" id="ct-addr-url" required class="input-field" /></div>
-                        <div><label class="block text-sm font-semibold mb-1">เบอร์โทรศัพท์</label><input type="text" id="ct-phone" required class="input-field" /></div>
-                        <div class="pt-4 border-t">
-                            <label class="block text-sm font-semibold mb-1 text-blue-700 flex items-center">ลิงก์ Facebook</label>
-                            <input type="url" id="ct-fb" required class="input-field border-blue-200 focus:border-blue-500" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold mb-1 text-green-700 flex items-center">ลิงก์ Line Official</label>
-                            <input type="url" id="ct-line" required class="input-field border-green-200 focus:border-green-500" />
-                        </div>
-                        <button type="submit" class="mt-4 px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 flex items-center transition shadow-md">
-                            <i data-lucide="save" class="h-5 w-5 mr-2"></i> บันทึกข้อมูลติดต่อ
-                        </button>
-                    </form>
-                </div>
-
-                <!-- TAB CONTENT: SETTINGS -->
-                <div id="content-settings" class="tab-content hidden fade-in max-w-3xl">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">ตั้งค่าโลโก้ และหน้าปกเว็บ</h2>
-                    <form onsubmit="saveSettings(event)" class="space-y-6">
-                        <div class="bg-gray-50 p-5 rounded-xl border border-gray-200 flex items-start space-x-6">
-                            <div class="shrink-0">
-                                <label class="block text-sm font-semibold mb-2">โลโก้ร้าน (Logo)</label>
-                                <img id="set-logo-preview" src="" class="w-24 h-24 object-cover rounded-full border-4 border-white shadow-md bg-white" onerror="this.style.display='none'" />
-                            </div>
-                            <div class="flex-1 mt-6">
-                                <input type="text" id="set-logo" required class="input-field" placeholder="ใส่ชื่อไฟล์ภาพ หรือ ลิงก์" oninput="document.getElementById('set-logo-preview').src=convertDriveUrl(this.value); document.getElementById('set-logo-preview').style.display='block';" />
-                                <p class="text-xs text-gray-500 mt-1">สามารถใส่ชื่อไฟล์เช่น `image.png` หรือลิงก์ Google Drive</p>
-                            </div>
-                        </div>
-
-                        <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
-                            <label class="block text-sm font-semibold mb-2">ภาพหน้าปก (Hero Image)</label>
-                            <input type="url" id="set-hero-img" required class="input-field mb-3" oninput="document.getElementById('set-hero-preview').src=convertDriveUrl(this.value)" />
-                            <div class="h-40 rounded-xl overflow-hidden shadow-inner bg-gray-200 w-full relative">
-                                <img id="set-hero-preview" src="" alt="Hero" class="w-full h-full object-cover" onerror="this.style.display='none'" onload="this.style.display='block'" />
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div><label class="block text-sm font-semibold mb-1">หัวข้อหลักบนภาพปก</label><input type="text" id="set-title" required class="input-field" /></div>
-                            <div><label class="block text-sm font-semibold mb-1">คำบรรยายรอง</label><input type="text" id="set-subtitle" required class="input-field" /></div>
-                        </div>
-
-                        <button type="submit" class="w-full md:w-auto px-8 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 flex items-center justify-center transition shadow-md">
-                            <i data-lucide="save" class="h-5 w-5 mr-2"></i> บันทึกการตั้งค่า
-                        </button>
-                    </form>
-                </div>
+                <!-- Dynamic Content Area -->
+                <div id="admin-content-area"></div>
 
             </div>
-            
-            <div class="md:hidden mt-6 pb-6">
-                <button onclick="handleLogout()" class="w-full flex items-center justify-center bg-gray-800 text-white py-4 rounded-xl shadow-lg font-bold">
-                    <i data-lucide="log-out" class="w-5 h-5 mr-2"></i> ออกจากระบบแอดมิน
-                </button>
-            </div>
+            <div class="md:hidden mt-6 pb-6"><button onclick="handleLogout()" class="w-full bg-gray-800 text-white py-4 rounded-xl font-bold">ออกจากระบบแอดมิน</button></div>
         </div>
     </div>
 
-    <!-- Application Script -->
+
+    <!-- ========================================== -->
+    <!-- 📂 ส่วนของ JAVASCRIPT (.env, state, logic) -->
+    <!-- บน Server จริงควรแยกไฟล์และใช้ .env จริง -->
+    <!-- ========================================== -->
     <script>
-        // --- State ---
-        const state = {
+        // ----------------------------------------------------
+        // 1. CONFIGURATION (จำลองไฟล์ .env)
+        // ----------------------------------------------------
+        const CONFIG = {
+            ADMIN_PIN: "000000",
+            // หากมี Web App URL ของ Google Script ให้ใส่ตรงนี้
+            GOOGLE_SCRIPT_URL: "" // เช่น "https://script.google.com/macros/s/xxxx/exec"
+        };
+
+        // ----------------------------------------------------
+        // 2. STATE MANAGEMENT (จำลอง Database)
+        // ----------------------------------------------------
+        let state = {
             promotions: [
                 { id: 1, image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80', link: '#menu' },
-                { id: 2, image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80', link: 'https://facebook.com/share/1DsJYkHEQr/?mibextid=wwXIfr' }
+                { id: 2, image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80', link: 'https://facebook.com' }
             ],
             menuItems: [
-                { id: 1, name: 'ผัดไทยกุ้งสด', price: '120', image: 'https://images.unsplash.com/photo-1559314809-0d155014e29e?auto=format&fit=crop&w=500&q=80', description: 'ผัดไทยเส้นจันท์เหนียวนุ่ม กุ้งสดตัวโต พร้อมเครื่องเคียงครบชุด', recommended: true },
-                { id: 2, name: 'ข้าวกะเพราเนื้อสับไข่ดาว', price: '95', image: 'https://images.unsplash.com/photo-1626804475297-41609ea064eb?auto=format&fit=crop&w=500&q=80', description: 'เนื้อสับผัดกะเพรารสจัดจ้าน เสิร์ฟพร้อมข้าวสวยร้อนๆ และไข่ดาว', recommended: false },
-                { id: 3, name: 'ต้มยำกุ้งน้ำข้น', price: '180', image: 'https://images.unsplash.com/photo-1548943487-a2e4f43b4859?auto=format&fit=crop&w=500&q=80', description: 'ต้มยำกุ้งแม่น้ำ รสชาติเข้มข้น หอมเครื่องต้มยำแท้ๆ', recommended: true },
+                { id: 1, name: 'ผัดไทยกุ้งสด', price: '120', image: 'https://images.unsplash.com/photo-1559314809-0d155014e29e?auto=format&fit=crop&w=800&q=80', description: 'ผัดไทยเส้นจันท์เหนียวนุ่ม กุ้งสดตัวโต', recommended: true },
+                { id: 2, name: 'กะเพราเนื้อสับ', price: '95', image: 'https://images.unsplash.com/photo-1626804475297-41609ea064eb?auto=format&fit=crop&w=800&q=80', description: 'เนื้อสับเกรดพรีเมียมผัดกะเพรารสจัดจ้าน', recommended: false },
             ],
             atmospheres: [
-                { id: 1, image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80', caption: 'บรรยากาศที่นั่งด้านใน' },
-                { id: 2, image: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=800&q=80', caption: 'มุมสำหรับครอบครัว' },
+                { id: 1, image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80', caption: 'บรรยากาศด้านใน' },
             ],
             notices: [
-                { id: 1, text: 'โปรโมชั่นพิเศษ! ลด 10% ทุกเมนูเมื่อทานอาหารที่ร้านครบ 1,000 บาท ตลอดเดือนนี้', linkText: 'ดูเมนู', linkUrl: '#menu' },
-                { id: 2, text: 'ร้านเปิดให้บริการทุกวัน ตั้งแต่เวลา 10:00 - 22:00 น. ยินดีต้อนรับทุกท่านครับ', linkText: '', linkUrl: '' },
+                { id: 1, text: 'โปรโมชั่นพิเศษ ลด 10% เมื่อทานครบ 1,000 บาท', linkText: 'ดูเมนู', linkUrl: '#menu' },
             ],
-            contact: {
-                addressText: 'ร้านอาหารเฟรนลี่เรสเตอรอง',
-                addressLink: 'https://maps.app.goo.gl/LWPaJMe25AcdZSBr8?g_st=ic',
-                phone: '098-314-5769',
-                facebook: 'https://www.facebook.com/share/1DsJYkHEQr/?mibextid=wwXIfr',
-                line: 'https://line.me/ti/p/'
-            },
+            contacts: [
+                { id: 1, type: 'map', text: 'ร้านอาหารเฟรนลี่เรสเตอรอง', url: 'https://maps.app.goo.gl/LWPaJMe25AcdZSBr8?g_st=ic' },
+                { id: 2, type: 'phone', text: '098-314-5769', url: 'tel:0983145769' }
+            ],
+            socials: [
+                { id: 1, type: 'facebook', text: 'Facebook : Friendly Restaurant', url: 'https://www.facebook.com/share/1DsJYkHEQr/?mibextid=wwXIfr' },
+                { id: 2, type: 'line', text: 'Line Official', url: 'https://line.me/ti/p/' }
+            ],
             settings: {
                 logo: 'image.png',
                 heroImage: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1920&q=80',
                 title: 'ยินดีต้อนรับสู่ Friendly Restaurant',
-                subtitle: 'อาหารอร่อย บรรยากาศดี บริการเป็นกันเอง'
+                subtitle: 'อาหารอร่อย บรรยากาศดี',
+                menuLimit: 8,
+                atmLimit: 6
             }
         };
 
-        let promoTimer = null;
+        // --- ตัวแปรสำหรับ Promotion Slider ---
+        let promoInterval;
 
-        // --- Helpers ---
+        // ----------------------------------------------------
+        // 3. UTILITY FUNCTIONS
+        // ----------------------------------------------------
         function convertDriveUrl(url) {
             if (!url) return '';
             const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-            if (match && match[1]) {
-                return `https://drive.google.com/uc?export=view&id=${match[1]}`;
-            }
+            if (match && match[1]) return `https://drive.google.com/uc?export=view&id=${match[1]}`;
             return url;
         }
 
-        // --- UI Interactions ---
-        function toggleMobileMenu() {
-            const menu = document.getElementById('mobile-menu');
-            menu.classList.toggle('hidden');
+        // --- Google Sheets Sync (โครงสร้างเตรียมไว้) ---
+        async function syncToGoogleSheets(action, payload) {
+            if(!CONFIG.GOOGLE_SCRIPT_URL) return; // ข้ามถ้าไม่ได้ใส่ URL
+            try {
+                await fetch(CONFIG.GOOGLE_SCRIPT_URL, {
+                    method: 'POST', mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: action, data: payload, fullState: state })
+                });
+            } catch (err) { console.error("Sync Error", err); }
         }
 
-        function showPinModal() {
-            document.getElementById('pin-modal').classList.remove('hidden');
-            document.getElementById('pin-input').focus();
-        }
-
-        function hidePinModal() {
-            document.getElementById('pin-modal').classList.add('hidden');
-            document.getElementById('pin-input').value = '';
-            document.getElementById('pin-error').classList.add('hidden');
-        }
-
-        function handleLogin(e) {
-            e.preventDefault();
-            const pin = document.getElementById('pin-input').value;
-            const btn = document.getElementById('btn-login');
-            btn.innerHTML = 'กำลังตรวจสอบ...';
-            btn.disabled = true;
-
-            setTimeout(() => {
-                if (pin === '000000') {
-                    document.getElementById('frontend-view').classList.add('hidden');
-                    document.getElementById('admin-view').classList.remove('hidden');
-                    hidePinModal();
-                    renderAllAdmin();
-                    clearInterval(promoTimer);
-                } else {
-                    document.getElementById('pin-error').classList.remove('hidden');
-                }
-                btn.innerHTML = 'เข้าสู่ระบบ';
-                btn.disabled = false;
-            }, 500);
-        }
-
-        function handleLogout() {
-            document.getElementById('admin-view').classList.add('hidden');
-            document.getElementById('frontend-view').classList.remove('hidden');
-            renderFrontend();
-            window.scrollTo(0,0);
-        }
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.admin-tab').forEach(el => {
-                el.classList.remove('bg-red-600', 'text-white', 'md:border-l-4', 'md:border-white', 'shadow-md');
-                el.classList.add('text-gray-300', 'hover:bg-gray-800', 'hover:text-white', 'md:border-transparent');
-            });
-
-            document.getElementById(`content-${tabId}`).classList.remove('hidden');
-            const activeTabBtn = document.getElementById(`tab-${tabId}`);
-            activeTabBtn.classList.remove('text-gray-300', 'hover:bg-gray-800', 'hover:text-white', 'md:border-transparent');
-            activeTabBtn.classList.add('bg-red-600', 'text-white', 'md:border-l-4', 'md:border-white', 'shadow-md');
-            
-            closeForms();
-        }
-
-        // --- Promotions Carousel Logic ---
-        function initPromoSlider() {
-            const track = document.getElementById('promo-track');
-            if(!track || state.promotions.length === 0) return;
-
-            // Auto slide every 3 seconds
-            clearInterval(promoTimer);
-            promoTimer = setInterval(() => {
-                const maxScrollLeft = track.scrollWidth - track.clientWidth;
-                if(track.scrollLeft >= maxScrollLeft - 10) { 
-                    track.scrollTo({ left: 0, behavior: 'smooth' });
-                } else {
-                    track.scrollBy({ left: track.clientWidth, behavior: 'smooth' });
-                }
-            }, 3000);
-
-            // Pause on hover or touch
-            track.onmouseenter = () => clearInterval(promoTimer);
-            track.onmouseleave = () => initPromoSlider();
-            track.ontouchstart = () => clearInterval(promoTimer);
-            track.ontouchend = () => initPromoSlider();
-
-            // Drag to scroll for Desktop
-            let isDown = false;
-            let startX;
-            let scrollLeft;
-
-            track.addEventListener('mousedown', (e) => {
-                isDown = true;
-                track.classList.add('active');
-                startX = e.pageX - track.offsetLeft;
-                scrollLeft = track.scrollLeft;
-            });
-            track.addEventListener('mouseleave', () => { isDown = false; });
-            track.addEventListener('mouseup', () => { isDown = false; });
-            track.addEventListener('mousemove', (e) => {
-                if (!isDown) return;
-                e.preventDefault();
-                const x = e.pageX - track.offsetLeft;
-                const walk = (x - startX) * 2; 
-                track.scrollLeft = scrollLeft - walk;
-            });
-        }
-
-        // --- Render Frontend ---
-        function renderFrontend() {
-            // Settings
+        // ----------------------------------------------------
+        // 4. FRONTEND LOGIC
+        // ----------------------------------------------------
+        function initFrontend() {
             const set = state.settings;
             document.getElementById('hero-img').src = convertDriveUrl(set.heroImage);
             document.getElementById('hero-title').innerText = set.title;
             document.getElementById('hero-subtitle').innerText = set.subtitle;
             document.getElementById('footer-subtitle').innerText = set.subtitle;
-            
-            const lUrl = convertDriveUrl(set.logo);
+
+            const logoUrl = convertDriveUrl(set.logo);
             ['nav-logo', 'footer-logo'].forEach(id => {
-                const img = document.getElementById(id);
-                const icon = document.getElementById(id + '-icon');
-                if(set.logo) { img.src = lUrl; img.style.display = 'block'; icon.style.display = 'none'; } 
+                const img = document.getElementById(id), icon = document.getElementById(id+'-icon');
+                if(set.logo) { img.src = logoUrl; img.style.display = 'block'; icon.style.display = 'none'; }
                 else { img.style.display = 'none'; icon.style.display = 'block'; }
             });
 
-            // Contact
-            const ct = state.contact;
-            document.getElementById('contact-address-text').innerText = ct.addressText;
-            document.getElementById('contact-address-link').href = ct.addressLink;
-            document.getElementById('contact-phone').innerText = ct.phone;
-            document.getElementById('contact-phone').href = `tel:${ct.phone.replace(/\D/g,'')}`;
-            document.getElementById('contact-facebook').href = ct.facebook;
-            document.getElementById('contact-line').href = ct.line;
-
-            // Promotions
-            const promoCont = document.getElementById('promotions-section');
-            const promoTrack = document.getElementById('promo-track');
+            // --- Promotions (Slider) ---
+            const pCont = document.getElementById('promotions');
+            const pTrack = document.getElementById('promo-track');
             if(state.promotions.length > 0) {
-                promoCont.classList.remove('hidden');
-                promoTrack.innerHTML = state.promotions.map(p => `
-                    <div class="flex-none w-[90%] md:w-[60%] lg:w-[45%] snap-center shrink-0">
-                        <a href="${p.link || '#'}" ${p.link && !p.link.startsWith('#') ? 'target="_blank"' : ''} class="block relative rounded-2xl overflow-hidden shadow-lg group">
-                            <img src="${convertDriveUrl(p.image)}" class="w-full h-48 md:h-64 object-cover transform transition duration-500 group-hover:scale-105" draggable="false" onerror="this.style.display='none'" />
+                pCont.classList.remove('hidden');
+                pTrack.innerHTML = state.promotions.map(p => `
+                    <div class="promo-item flex-none w-[90%] md:w-[60%] lg:w-[45%] shrink-0">
+                        <a href="${p.link || '#'}" class="block relative rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+                            <img src="${convertDriveUrl(p.image)}" class="w-full h-48 md:h-64 object-cover" draggable="false" />
                         </a>
                     </div>
                 `).join('');
-                setTimeout(initPromoSlider, 100); // init slider after render
-            } else {
-                promoCont.classList.add('hidden');
-            }
+                initSlider();
+            } else pCont.classList.add('hidden');
 
-            // Notices
-            const noticeCont = document.getElementById('notice-container');
-            const noticeList = document.getElementById('notice-list');
-            if(state.notices.length > 0) {
-                noticeCont.classList.remove('hidden');
-                noticeList.innerHTML = state.notices.map((n, i) => `
-                    <div class="p-4 ${i !== state.notices.length -1 ? 'border-b border-gray-100' : ''} flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <p class="text-gray-700 font-medium flex-1">${n.text}</p>
-                        ${n.linkText && n.linkUrl ? `<a href="${n.linkUrl}" class="shrink-0 text-sm bg-amber-100 text-amber-800 hover:bg-amber-200 px-4 py-2 rounded-lg font-bold transition inline-block text-center">${n.linkText}</a>` : ''}
+            // --- Menus ---
+            const limitedMenu = state.menuItems.slice(0, set.menuLimit);
+            document.getElementById('menu-grid').innerHTML = limitedMenu.map(m => `
+                <div onclick="showMenuDetail(${m.id})" class="cursor-pointer bg-white rounded-2xl shadow-md overflow-hidden transition transform hover:-translate-y-1 hover:shadow-xl relative">
+                    ${m.recommended ? `<div class="absolute top-3 left-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded shadow"><i data-lucide="star" class="w-3 h-3 inline"></i> แนะนำ</div>` : ''}
+                    <img src="${convertDriveUrl(m.image)}" class="w-full h-48 object-cover" />
+                    <div class="p-4">
+                        <h3 class="text-xl font-bold">${m.name}</h3>
+                        <p class="text-red-600 font-bold text-lg mt-1">฿${m.price}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            // --- Atmosphere ---
+            const limitedAtm = state.atmospheres.slice(0, set.atmLimit);
+            document.getElementById('atmosphere-grid').innerHTML = limitedAtm.map(a => `
+                <div class="rounded-xl overflow-hidden shadow-md relative group">
+                    <img src="${convertDriveUrl(a.image)}" class="w-full h-48 object-cover group-hover:scale-110 transition duration-500" />
+                    <div class="absolute bottom-0 w-full bg-black/50 p-2 text-white font-medium">${a.caption}</div>
+                </div>
+            `).join('');
+
+            // --- Notice Board ---
+            if(state.notices.length > 0){
+                document.getElementById('notice-container').classList.remove('hidden');
+                document.getElementById('notice-list').innerHTML = state.notices.map(n => `
+                    <div class="p-3 border-b border-gray-100 flex justify-between items-center">
+                        <span class="font-medium">${n.text}</span>
+                        ${n.linkText ? `<a href="${n.linkUrl}" class="bg-amber-100 text-amber-800 px-3 py-1 rounded text-sm font-bold">${n.linkText}</a>` : ''}
                     </div>
                 `).join('');
+            } else document.getElementById('notice-container').classList.add('hidden');
+
+            // --- Contacts & Socials ---
+            const cIcon = (t) => t==='map'?'map-pin':'phone';
+            document.getElementById('contact-list').innerHTML = state.contacts.map(c => `
+                <li><a href="${c.url}" class="flex items-start hover:text-red-400"><i data-lucide="${cIcon(c.type)}" class="w-5 h-5 mr-3 text-red-500 shrink-0"></i> ${c.text}</a></li>
+            `).join('');
+
+            const sIcon = (t) => {
+                if(t==='facebook') return '<svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" /></svg>';
+                if(t==='line') return '<svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.036 9.608.391.084.922.258 1.057.592.122.303.079.778.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.647 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.572-3.843 2.572-5.992zm-18.988-2.595h2.608c.253 0 .458.205.458.458v.918c0 .253-.205.458-.458.458h-1.69v1.69h1.69c.253 0 .458.205.458.458v.917c0 .253-.205.458-.458.458H5.012c-.253 0-.458-.205-.458-.458v-4.444c0-.253.205-.457.458-.457zm6.837 4.903c0 .253-.205.458-.458.458h-2.608c-.253 0-.458-.205-.458-.458v-4.444c0-.253.205-.457.458-.457h2.608c.253 0 .458.205.458.458v.918c0 .253-.205.458-.458.458h-1.69v.842h1.69c.253 0 .458.205.458.458v.917zm2.464 0c0 .253-.205.458-.458.458h-.917c-.253 0-.458-.205-.458-.458v-4.444c0-.253.205-.457.458-.457h.917c.253 0 .458.205.458.458v4.444zm6.059 0c0 .253-.205.458-.458.458h-2.608c-.253 0-.458-.205-.458-.458v-4.444c0-.253.205-.457.458-.457h2.608c.253 0 .458.205.458.458v.918c0 .253-.205.458-.458.458h-1.69v.842h1.69c.253 0 .458.205.458.458v.917z"/></svg>';
+                return '<i data-lucide="link" class="w-5 h-5"></i>';
+            }
+            document.getElementById('social-list').innerHTML = state.socials.map(s => `
+                <a href="${s.url}" class="flex items-center hover:text-white"><div class="bg-white p-1.5 rounded mr-3">${sIcon(s.type)}</div> ${s.text}</a>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function initSlider() {
+            const track = document.getElementById('promo-track');
+            if(!track) return;
+            clearInterval(promoInterval);
+            
+            // Auto Scroll
+            promoInterval = setInterval(() => {
+                const max = track.scrollWidth - track.clientWidth;
+                if(track.scrollLeft >= max - 10) track.scrollTo({ left: 0, behavior: 'smooth' });
+                else track.scrollBy({ left: track.clientWidth/2, behavior: 'smooth' });
+            }, 3000);
+
+            // Drag to Scroll (Mouse)
+            let isDown = false; let startX; let scrollLeft;
+            track.addEventListener('mousedown', (e) => { isDown = true; startX = e.pageX - track.offsetLeft; scrollLeft = track.scrollLeft; clearInterval(promoInterval); });
+            track.addEventListener('mouseleave', () => { isDown = false; initSlider(); });
+            track.addEventListener('mouseup', () => { isDown = false; initSlider(); });
+            track.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - track.offsetLeft;
+                track.scrollLeft = scrollLeft - ((x - startX) * 2);
+            });
+            // Touch Pause
+            track.addEventListener('touchstart', () => clearInterval(promoInterval));
+            track.addEventListener('touchend', () => initSlider());
+        }
+
+        // --- Pages ---
+        function showMainPage() {
+            document.getElementById('menu-detail-page').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+            window.scrollTo(0,0);
+        }
+
+        function showMenuDetail(id) {
+            const item = state.menuItems.find(i => i.id === id);
+            if(!item) return;
+            document.getElementById('main-content').classList.add('hidden');
+            document.getElementById('menu-detail-page').classList.remove('hidden');
+            
+            document.getElementById('detail-img').src = convertDriveUrl(item.image);
+            document.getElementById('detail-name').innerText = item.name;
+            document.getElementById('detail-price').innerText = `฿${item.price}`;
+            document.getElementById('detail-desc').innerText = item.description;
+            
+            const rec = document.getElementById('detail-recommended');
+            if(item.recommended) { rec.classList.remove('hidden'); rec.classList.add('inline-flex'); }
+            else { rec.classList.add('hidden'); rec.classList.remove('inline-flex'); }
+            window.scrollTo(0,0);
+        }
+
+        function toggleMobileMenu() { document.getElementById('mobile-menu').classList.toggle('hidden'); }
+
+        // ----------------------------------------------------
+        // 5. ADMIN LOGIN
+        // ----------------------------------------------------
+        function showPinModal() { document.getElementById('pin-modal').classList.remove('hidden'); }
+        function hidePinModal() { document.getElementById('pin-modal').classList.add('hidden'); document.getElementById('pin-error').classList.add('hidden'); }
+        function handleLogin(e) {
+            e.preventDefault();
+            if (document.getElementById('pin-input').value === CONFIG.ADMIN_PIN) {
+                document.getElementById('frontend-view').classList.add('hidden');
+                document.getElementById('admin-view').classList.remove('hidden');
+                document.getElementById('admin-view').classList.add('flex');
+                hidePinModal();
+                switchTab('promo'); // Default tab
             } else {
-                noticeCont.classList.add('hidden');
+                document.getElementById('pin-error').classList.remove('hidden');
+            }
+        }
+        function handleLogout() {
+            document.getElementById('admin-view').classList.add('hidden');
+            document.getElementById('admin-view').classList.remove('flex');
+            document.getElementById('frontend-view').classList.remove('hidden');
+            renderFrontend();
+        }
+
+        // ----------------------------------------------------
+        // 6. ADMIN CRUD LOGIC (Dynamic HTML Generation)
+        // ----------------------------------------------------
+        function switchTab(tab) {
+            // Update Buttons UI
+            document.querySelectorAll('.admin-tab').forEach(b => {
+                b.classList.remove('bg-red-600', 'text-white');
+                b.classList.add('text-gray-300');
+            });
+            document.getElementById(`tab-${tab}`).classList.remove('text-gray-300');
+            document.getElementById(`tab-${tab}`).classList.add('bg-red-600', 'text-white');
+
+            const area = document.getElementById('admin-content-area');
+            let html = '';
+
+            if (tab === 'promo') {
+                html = generateCrudHTML('โปรโมชั่น', 'promo', state.promotions, [
+                    { name: 'image', label: 'URL รูปภาพ (Google Drive)', type: 'url' },
+                    { name: 'link', label: 'ลิงก์เป้าหมายเมื่อคลิก', type: 'text' }
+                ], (item) => `<img src="${convertDriveUrl(item.image)}" class="h-16 w-32 object-cover rounded mr-4" /> <span class="truncate">${item.link}</span>`);
+            } 
+            else if (tab === 'menu') {
+                html = generateCrudHTML('เมนูอาหาร', 'menu', state.menuItems, [
+                    { name: 'name', label: 'ชื่อเมนู', type: 'text' },
+                    { name: 'price', label: 'ราคา', type: 'number' },
+                    { name: 'image', label: 'URL รูปภาพ', type: 'url' },
+                    { name: 'description', label: 'รายละเอียด', type: 'textarea' },
+                    { name: 'recommended', label: '⭐ ตั้งเป็นเมนูแนะนำ', type: 'checkbox' }
+                ], (item) => `<img src="${convertDriveUrl(item.image)}" class="h-16 w-16 object-cover rounded mr-4" /> <div><b>${item.name}</b> (฿${item.price}) ${item.recommended?'⭐':''}</div>`);
+            }
+            else if (tab === 'atm') {
+                html = generateCrudHTML('บรรยากาศร้าน', 'atm', state.atmospheres, [
+                    { name: 'image', label: 'URL รูปภาพ', type: 'url' },
+                    { name: 'caption', label: 'คำบรรยาย', type: 'text' }
+                ], (item) => `<img src="${convertDriveUrl(item.image)}" class="h-16 w-32 object-cover rounded mr-4" /> <span>${item.caption}</span>`);
+            }
+            else if (tab === 'notice') {
+                html = generateCrudHTML('บอร์ดประกาศ', 'notice', state.notices, [
+                    { name: 'text', label: 'ข้อความประกาศ', type: 'textarea' },
+                    { name: 'linkText', label: 'ข้อความปุ่มลิงก์', type: 'text' },
+                    { name: 'linkUrl', label: 'URL ของปุ่ม', type: 'url' }
+                ], (item) => `<div><b>${item.text}</b><br/><small class="text-blue-500">${item.linkUrl}</small></div>`);
+            }
+            else if (tab === 'contact') {
+                html = `
+                    <h2 class="text-2xl font-bold mb-6 border-b pb-2">ช่องทางการติดต่อ</h2>
+                    ${generateCrudHTML('', 'contact', state.contacts, [
+                        { name: 'type', label: 'ประเภท (map / phone)', type: 'select', options: ['map', 'phone'] },
+                        { name: 'text', label: 'ข้อความที่จะแสดง', type: 'text' },
+                        { name: 'url', label: 'URL หรือ tel:', type: 'text' }
+                    ], (item) => `<b>[${item.type}]</b> &nbsp; ${item.text}`)}
+                    
+                    <h2 class="text-2xl font-bold mb-6 mt-10 border-b pb-2">โซเชียลมีเดีย</h2>
+                    ${generateCrudHTML('', 'social', state.socials, [
+                        { name: 'type', label: 'แพลตฟอร์ม (facebook / line)', type: 'select', options: ['facebook', 'line'] },
+                        { name: 'text', label: 'ข้อความ', type: 'text' },
+                        { name: 'url', label: 'URL ลิงก์โซเชียล', type: 'url' }
+                    ], (item) => `<b>[${item.type}]</b> &nbsp; ${item.text}`)}
+                `;
+            }
+            else if (tab === 'settings') {
+                const s = state.settings;
+                html = `
+                    <h2 class="text-2xl font-bold mb-6">ตั้งค่าทั่วไป</h2>
+                    <form onsubmit="saveSettings(event)" class="space-y-4">
+                        <div><label class="block text-sm font-bold mb-1">โลโก้ (ไฟล์ หรือ URL)</label><input type="text" id="s_logo" value="${s.logo}" class="input-field" required></div>
+                        <div><label class="block text-sm font-bold mb-1">ภาพปก (Hero URL)</label><input type="url" id="s_hero" value="${s.heroImage}" class="input-field" required></div>
+                        <div><label class="block text-sm font-bold mb-1">หัวข้อหลัก</label><input type="text" id="s_title" value="${s.title}" class="input-field" required></div>
+                        <div><label class="block text-sm font-bold mb-1">คำบรรยายรอง</label><input type="text" id="s_sub" value="${s.subtitle}" class="input-field" required></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-sm font-bold mb-1">แสดงเมนู (รายการ)</label><input type="number" id="s_mlim" value="${s.menuLimit}" class="input-field" required></div>
+                            <div><label class="block text-sm font-bold mb-1">แสดงบรรยากาศ (รูป)</label><input type="number" id="s_alim" value="${s.atmLimit}" class="input-field" required></div>
+                        </div>
+                        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded font-bold">บันทึกการตั้งค่า</button>
+                    </form>
+                `;
             }
 
-            // Menu
-            document.getElementById('menu-grid').innerHTML = state.menuItems.map(item => `
-                <div class="bg-white rounded-2xl shadow-md overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-xl border border-gray-100 relative group">
-                    ${item.recommended ? `<div class="absolute top-4 left-4 z-10 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-md flex items-center"><i data-lucide="star" class="w-3 h-3 mr-1" style="fill:#713f12"></i> แนะนำ</div>` : ''}
-                    <div class="h-60 overflow-hidden relative">
-                        <img src="${convertDriveUrl(item.image)}" alt="${item.name}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=500&q=80'" />
-                        <div class="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-full font-bold text-red-600 shadow-lg text-lg">฿${item.price}</div>
-                    </div>
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold text-gray-900 mb-2">${item.name}</h3>
-                        <p class="text-gray-600 text-sm line-clamp-2">${item.description}</p>
-                    </div>
-                </div>
-            `).join('');
-
-            // Atmosphere
-            document.getElementById('atmosphere-grid').innerHTML = state.atmospheres.map(item => `
-                <div class="group relative rounded-2xl overflow-hidden shadow-lg aspect-video cursor-pointer">
-                    <img src="${convertDriveUrl(item.image)}" alt="${item.caption}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110" />
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 transition-opacity"></div>
-                    <div class="absolute bottom-0 left-0 right-0 p-4">
-                        <p class="text-white font-medium text-lg drop-shadow-md">${item.caption}</p>
-                    </div>
-                </div>
-            `).join('');
-
+            area.innerHTML = html;
             lucide.createIcons();
         }
 
-        // --- Render Admin ---
-        function renderAllAdmin() {
-            renderAdminPromo();
-            renderAdminMenu();
-            renderAdminAtmosphere();
-            renderAdminNotice();
+        function generateCrudHTML(title, type, dataArray, fields, renderRow) {
+            let html = title ? `<div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${title}</h2> <button onclick="openForm('${type}')" class="bg-green-600 text-white px-4 py-2 rounded flex items-center"><i data-lucide="plus" class="w-4 h-4 mr-1"></i> เพิ่มใหม่</button></div>` : 
+                               `<div class="mb-4 text-right"><button onclick="openForm('${type}')" class="bg-green-600 text-white px-4 py-2 rounded text-sm">+ เพิ่มใหม่</button></div>`;
             
-            // Pop contact
-            const ct = state.contact;
-            document.getElementById('ct-addr-text').value = ct.addressText;
-            document.getElementById('ct-addr-url').value = ct.addressLink;
-            document.getElementById('ct-phone').value = ct.phone;
-            document.getElementById('ct-fb').value = ct.facebook;
-            document.getElementById('ct-line').value = ct.line;
+            // Form (Hidden by default)
+            html += `<form id="form-${type}" class="hidden bg-gray-50 p-4 rounded-xl border mb-6 space-y-4" onsubmit="saveData(event, '${type}')">
+                        <input type="hidden" id="${type}-id" />`;
+            fields.forEach(f => {
+                if (f.type === 'textarea') html += `<div><label class="block text-sm font-bold mb-1">${f.label}</label><textarea id="${type}-${f.name}" class="input-field" rows="2"></textarea></div>`;
+                else if (f.type === 'checkbox') html += `<div class="flex items-center"><input type="checkbox" id="${type}-${f.name}" class="w-5 h-5 mr-2" /> <label class="font-bold text-yellow-700">${f.label}</label></div>`;
+                else if (f.type === 'select') html += `<div><label class="block text-sm font-bold mb-1">${f.label}</label><select id="${type}-${f.name}" class="input-field">${f.options.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>`;
+                else html += `<div><label class="block text-sm font-bold mb-1">${f.label}</label><input type="${f.type}" id="${type}-${f.name}" class="input-field" /></div>`;
+            });
+            html += `<div class="flex justify-end space-x-2"><button type="button" onclick="closeForm('${type}')" class="px-4 py-2 bg-white border rounded">ยกเลิก</button><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">บันทึก</button></div></form>`;
 
-            // Pop Settings
-            const set = state.settings;
-            document.getElementById('set-logo').value = set.logo;
-            document.getElementById('set-logo-preview').src = convertDriveUrl(set.logo);
-            document.getElementById('set-hero-img').value = set.heroImage;
-            document.getElementById('set-hero-preview').src = convertDriveUrl(set.heroImage);
-            document.getElementById('set-title').value = set.title;
-            document.getElementById('set-subtitle').value = set.subtitle;
-
-            lucide.createIcons();
+            // List
+            html += `<div class="space-y-3">`;
+            dataArray.forEach(item => {
+                html += `<div class="flex justify-between items-center bg-white p-3 border rounded-lg shadow-sm hover:bg-gray-50">
+                            <div class="flex items-center flex-1 overflow-hidden">${renderRow(item)}</div>
+                            <div class="flex space-x-2 shrink-0 ml-4">
+                                <button onclick='editData("${type}", ${JSON.stringify(item).replace(/'/g, "&#39;")})' class="p-2 text-blue-600 bg-blue-50 rounded"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                                <button onclick="deleteData('${type}', ${item.id})" class="p-2 text-red-600 bg-red-50 rounded"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>`;
+            });
+            if(dataArray.length === 0) html += `<div class="text-center text-gray-500 py-4">ไม่มีข้อมูล</div>`;
+            html += `</div>`;
+            return html;
         }
 
-        function renderAdminPromo() {
-            document.getElementById('admin-promo-list').innerHTML = state.promotions.map(item => `
-                <div class="flex border border-gray-200 rounded-xl p-3 items-center hover:bg-gray-50 bg-white shadow-sm">
-                    <img src="${convertDriveUrl(item.image)}" class="w-32 h-20 rounded-lg object-cover bg-gray-200 shrink-0" onerror="this.style.display='none'" />
-                    <div class="ml-4 flex-1 overflow-hidden">
-                        <p class="text-sm text-gray-500 truncate mb-1">ลิงก์: ${item.link || 'ไม่ได้ตั้งลิงก์'}</p>
-                    </div>
-                    <div class="flex flex-col space-y-2 ml-2">
-                        <button onclick="editPromo(${item.id})" class="p-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100"><i data-lucide="edit" class="w-4 h-4"></i></button>
-                        <button onclick="deleteItem('promo', ${item.id})" class="p-2 bg-red-50 text-red-600 rounded hover:bg-red-100"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>
-                </div>
-            `).join('');
-            lucide.createIcons();
+        function openForm(type) { document.getElementById(`form-${type}`).reset(); document.getElementById(`${type}-id`).value = ''; document.getElementById(`form-${type}`).classList.remove('hidden'); }
+        function closeForm(type) { document.getElementById(`form-${type}`).classList.add('hidden'); }
+        function editData(type, item) {
+            openForm(type);
+            document.getElementById(`${type}-id`).value = item.id;
+            Object.keys(item).forEach(k => {
+                const el = document.getElementById(`${type}-${k}`);
+                if(el) { if(el.type === 'checkbox') el.checked = item[k]; else el.value = item[k]; }
+            });
         }
-
-        function renderAdminMenu() {
-            document.getElementById('admin-menu-list').innerHTML = state.menuItems.map(item => `
-                <div class="flex border border-gray-200 rounded-xl p-3 items-center hover:bg-gray-50">
-                    <img src="${convertDriveUrl(item.image)}" class="w-20 h-20 rounded-lg object-cover bg-gray-200 shrink-0" onerror="this.style.display='none'" />
-                    <div class="ml-4 flex-1">
-                        <h4 class="font-bold text-lg flex items-center">${item.name} ${item.recommended ? '<i data-lucide="star" class="w-4 h-4 ml-1 text-yellow-500" style="fill:#eab308"></i>' : ''}</h4>
-                        <p class="text-red-600 font-medium">฿${item.price}</p>
-                    </div>
-                    <div class="flex flex-col space-y-2 ml-2">
-                        <button onclick="editMenu(${item.id})" class="p-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100"><i data-lucide="edit" class="w-4 h-4"></i></button>
-                        <button onclick="deleteItem('menu', ${item.id})" class="p-2 bg-red-50 text-red-600 rounded hover:bg-red-100"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        function renderAdminAtmosphere() {
-            document.getElementById('admin-atm-list').innerHTML = state.atmospheres.map(item => `
-                <div class="relative group rounded-xl overflow-hidden shadow-sm border border-gray-200">
-                    <img src="${convertDriveUrl(item.image)}" class="w-full h-32 object-cover" />
-                    <div class="p-2 bg-white text-sm font-medium truncate">${item.caption || 'ไม่มีคำบรรยาย'}</div>
-                    <div class="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition">
-                        <button onclick="editAtmosphere(${item.id})" class="p-1.5 bg-white text-blue-600 rounded-md shadow"><i data-lucide="edit" class="w-4 h-4"></i></button>
-                        <button onclick="deleteItem('atm', ${item.id})" class="p-1.5 bg-white text-red-600 rounded-md shadow"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        function renderAdminNotice() {
-            document.getElementById('admin-notice-list').innerHTML = state.notices.map(item => `
-                <div class="p-4 border border-gray-200 rounded-xl flex justify-between items-center bg-amber-50">
-                    <div>
-                        <p class="font-medium text-amber-900">${item.text}</p>
-                        ${item.linkText ? `<span class="text-sm text-blue-600 mt-1 block">🔗 ${item.linkText} (${item.linkUrl})</span>` : ''}
-                    </div>
-                    <div class="flex space-x-2 shrink-0 ml-4">
-                        <button onclick="editNotice(${item.id})" class="p-2 bg-white text-blue-600 rounded shadow-sm hover:bg-blue-50"><i data-lucide="edit" class="w-4 h-4"></i></button>
-                        <button onclick="deleteItem('notice', ${item.id})" class="p-2 bg-white text-red-600 rounded shadow-sm hover:bg-red-50"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        // --- Admin Forms Control ---
-        function closeForms() {
-            ['form-promo', 'form-menu', 'form-atmosphere', 'form-notice'].forEach(id => document.getElementById(id).classList.add('hidden'));
-            ['btn-add-promo', 'btn-add-menu', 'btn-add-atm', 'btn-add-notice'].forEach(id => document.getElementById(id).classList.remove('hidden'));
-        }
-
-        function deleteItem(type, id) {
-            if(!confirm('ยืนยันการลบข้อมูล?')) return;
-            if(type === 'promo') { state.promotions = state.promotions.filter(i => i.id !== id); renderAdminPromo(); }
-            if(type === 'menu') { state.menuItems = state.menuItems.filter(i => i.id !== id); renderAdminMenu(); }
-            if(type === 'atm') { state.atmospheres = state.atmospheres.filter(i => i.id !== id); renderAdminAtmosphere(); }
-            if(type === 'notice') { state.notices = state.notices.filter(i => i.id !== id); renderAdminNotice(); }
-        }
-
-        // Promo Form
-        function openPromoForm() {
-            document.getElementById('form-promo').reset();
-            document.getElementById('promo-id').value = '';
-            document.getElementById('promo-preview').classList.add('hidden');
-            document.getElementById('form-promo').classList.remove('hidden');
-            document.getElementById('btn-add-promo').classList.add('hidden');
-        }
-        function editPromo(id) {
-            openPromoForm();
-            const item = state.promotions.find(i => i.id === id);
-            document.getElementById('promo-id').value = item.id;
-            document.getElementById('promo-image').value = item.image;
-            document.getElementById('promo-preview').src = convertDriveUrl(item.image);
-            document.getElementById('promo-preview').classList.remove('hidden');
-            document.getElementById('promo-link').value = item.link;
-        }
-        function savePromo(e) {
+        
+        function saveData(e, type) {
             e.preventDefault();
-            const id = document.getElementById('promo-id').value;
-            const newItem = {
-                id: id ? parseInt(id) : Date.now(),
-                image: document.getElementById('promo-image').value,
-                link: document.getElementById('promo-link').value
-            };
-            if(id) state.promotions = state.promotions.map(i => i.id === parseInt(id) ? newItem : i);
-            else state.promotions.push(newItem);
-            closeForms(); renderAdminPromo();
+            const id = document.getElementById(`${type}-id`).value;
+            let newItem = { id: id ? parseInt(id) : Date.now() };
+            
+            // Extract values dynamically based on inputs inside the form
+            const inputs = document.getElementById(`form-${type}`).querySelectorAll('input, textarea, select');
+            inputs.forEach(el => {
+                if(el.id !== `${type}-id`) {
+                    const key = el.id.replace(`${type}-`, '');
+                    newItem[key] = el.type === 'checkbox' ? el.checked : el.value;
+                }
+            });
+
+            const stateKey = type === 'promo' ? 'promotions' : type === 'atm' ? 'atmospheres' : type + 's';
+            if(id) state[stateKey] = state[stateKey].map(i => i.id === parseInt(id) ? newItem : i);
+            else state[stateKey].push(newItem);
+            
+            syncToGoogleSheets('save', newItem); // Sync
+            
+            let activeTab = type;
+            if(type === 'contact' || type === 'social') activeTab = 'contact';
+            switchTab(activeTab);
         }
 
-        // Menu Form
-        function openMenuForm() {
-            document.getElementById('form-menu').reset();
-            document.getElementById('menu-id').value = '';
-            document.getElementById('menu-preview').classList.add('hidden');
-            document.getElementById('form-menu-title').innerText = '✨ เพิ่มเมนูใหม่';
-            document.getElementById('form-menu').classList.remove('hidden');
-            document.getElementById('btn-add-menu').classList.add('hidden');
-        }
-        function editMenu(id) {
-            openMenuForm();
-            const item = state.menuItems.find(i => i.id === id);
-            document.getElementById('form-menu-title').innerText = '✏️ แก้ไขเมนู';
-            document.getElementById('menu-id').value = item.id;
-            document.getElementById('menu-name').value = item.name;
-            document.getElementById('menu-price').value = item.price;
-            document.getElementById('menu-image').value = item.image;
-            document.getElementById('menu-preview').src = convertDriveUrl(item.image);
-            document.getElementById('menu-preview').classList.remove('hidden');
-            document.getElementById('menu-desc').value = item.description;
-            document.getElementById('menu-recommended').checked = item.recommended;
-        }
-        function saveMenu(e) {
-            e.preventDefault();
-            const id = document.getElementById('menu-id').value;
-            const newItem = {
-                id: id ? parseInt(id) : Date.now(),
-                name: document.getElementById('menu-name').value,
-                price: document.getElementById('menu-price').value,
-                image: document.getElementById('menu-image').value,
-                description: document.getElementById('menu-desc').value,
-                recommended: document.getElementById('menu-recommended').checked
-            };
-            if(id) state.menuItems = state.menuItems.map(i => i.id === parseInt(id) ? newItem : i);
-            else state.menuItems.push(newItem);
-            closeForms(); renderAdminMenu();
-        }
-
-        // Atmosphere Form
-        function openAtmosphereForm() {
-            document.getElementById('form-atmosphere').reset();
-            document.getElementById('atm-id').value = '';
-            document.getElementById('form-atmosphere').classList.remove('hidden');
-            document.getElementById('btn-add-atm').classList.add('hidden');
-        }
-        function editAtmosphere(id) {
-            openAtmosphereForm();
-            const item = state.atmospheres.find(i => i.id === id);
-            document.getElementById('atm-id').value = item.id;
-            document.getElementById('atm-image').value = item.image;
-            document.getElementById('atm-caption').value = item.caption;
-        }
-        function saveAtmosphere(e) {
-            e.preventDefault();
-            const id = document.getElementById('atm-id').value;
-            const newItem = {
-                id: id ? parseInt(id) : Date.now(),
-                image: document.getElementById('atm-image').value,
-                caption: document.getElementById('atm-caption').value
-            };
-            if(id) state.atmospheres = state.atmospheres.map(i => i.id === parseInt(id) ? newItem : i);
-            else state.atmospheres.push(newItem);
-            closeForms(); renderAdminAtmosphere();
-        }
-
-        // Notice Form
-        function openNoticeForm() {
-            document.getElementById('form-notice').reset();
-            document.getElementById('notice-id').value = '';
-            document.getElementById('form-notice').classList.remove('hidden');
-            document.getElementById('btn-add-notice').classList.add('hidden');
-        }
-        function editNotice(id) {
-            openNoticeForm();
-            const item = state.notices.find(i => i.id === id);
-            document.getElementById('notice-id').value = item.id;
-            document.getElementById('notice-text').value = item.text;
-            document.getElementById('notice-btn-text').value = item.linkText;
-            document.getElementById('notice-url').value = item.linkUrl;
-        }
-        function saveNotice(e) {
-            e.preventDefault();
-            const id = document.getElementById('notice-id').value;
-            const newItem = {
-                id: id ? parseInt(id) : Date.now(),
-                text: document.getElementById('notice-text').value,
-                linkText: document.getElementById('notice-btn-text').value,
-                linkUrl: document.getElementById('notice-url').value
-            };
-            if(id) state.notices = state.notices.map(i => i.id === parseInt(id) ? newItem : i);
-            else state.notices.push(newItem);
-            closeForms(); renderAdminNotice();
-        }
-
-        // Save Contact & Settings
-        function saveContact(e) {
-            e.preventDefault();
-            state.contact = {
-                addressText: document.getElementById('ct-addr-text').value,
-                addressLink: document.getElementById('ct-addr-url').value,
-                phone: document.getElementById('ct-phone').value,
-                facebook: document.getElementById('ct-fb').value,
-                line: document.getElementById('ct-line').value,
-            };
-            alert('บันทึกข้อมูลติดต่อเรียบร้อย');
+        function deleteData(type, id) {
+            if(!confirm('ยืนยันการลบ?')) return;
+            const stateKey = type === 'promo' ? 'promotions' : type === 'atm' ? 'atmospheres' : type + 's';
+            state[stateKey] = state[stateKey].filter(i => i.id !== id);
+            syncToGoogleSheets('delete', {id, type}); // Sync
+            
+            let activeTab = type;
+            if(type === 'contact' || type === 'social') activeTab = 'contact';
+            switchTab(activeTab);
         }
 
         function saveSettings(e) {
             e.preventDefault();
             state.settings = {
-                logo: document.getElementById('set-logo').value,
-                heroImage: document.getElementById('set-hero-img').value,
-                title: document.getElementById('set-title').value,
-                subtitle: document.getElementById('set-subtitle').value,
+                logo: document.getElementById('s_logo').value, heroImage: document.getElementById('s_hero').value,
+                title: document.getElementById('s_title').value, subtitle: document.getElementById('s_sub').value,
+                menuLimit: parseInt(document.getElementById('s_mlim').value), atmLimit: parseInt(document.getElementById('s_alim').value)
             };
-            alert('บันทึกการตั้งค่าร้านเรียบร้อย');
+            syncToGoogleSheets('settings', state.settings); // Sync
+            alert('บันทึกสำเร็จ');
         }
 
-        // Initialize App
-        window.onload = function() {
-            renderFrontend();
-        };
+        // Init
+        window.onload = () => initFrontend();
     </script>
 </body>
 </html>
