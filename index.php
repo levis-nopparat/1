@@ -240,7 +240,7 @@
         // ----------------------------------------------------
         const CONFIG = {
             ADMIN_PIN: "000000",
-            // หากมี Web App URL ของ Google Script ให้ใส่ตรงนี้
+            // นำ URL ของ Web App จาก Google Script มาใส่ตรงนี้เพื่อให้ระบบเชื่อมต่อกัน
             GOOGLE_SCRIPT_URL: "" // เช่น "https://script.google.com/macros/s/xxxx/exec"
         };
 
@@ -293,16 +293,35 @@
             return url;
         }
 
-        // --- Google Sheets Sync (โครงสร้างเตรียมไว้) ---
+        // --- Google Sheets Sync ---
         async function syncToGoogleSheets(action, payload) {
             if(!CONFIG.GOOGLE_SCRIPT_URL) return; // ข้ามถ้าไม่ได้ใส่ URL
             try {
                 await fetch(CONFIG.GOOGLE_SCRIPT_URL, {
-                    method: 'POST', mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST',
+                    mode: 'no-cors', // ใช้ no-cors เพื่อป้องกันปัญหา Cross-Origin
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: action, data: payload, fullState: state })
                 });
             } catch (err) { console.error("Sync Error", err); }
+        }
+
+        // --- โหลดข้อมูลจาก Google Sheets ตอนเปิดเว็บ ---
+        async function loadFromGoogleSheets() {
+            if(!CONFIG.GOOGLE_SCRIPT_URL) {
+                initFrontend(); // ถ้าไม่มี URL ให้ใช้ข้อมูลเริ่มต้นในโค้ด
+                return;
+            }
+            try {
+                const res = await fetch(CONFIG.GOOGLE_SCRIPT_URL);
+                const data = await res.json();
+                if(data && Object.keys(data).length > 0) {
+                    state = { ...state, ...data }; // นำข้อมูลจาก Sheets มาทับค่าเริ่มต้น
+                }
+            } catch(err) {
+                console.error("Load Database Error", err);
+            }
+            initFrontend(); // โหลดหน้า UI
         }
 
         // ----------------------------------------------------
@@ -637,8 +656,8 @@
             alert('บันทึกสำเร็จ');
         }
 
-        // Init
-        window.onload = () => initFrontend();
+        // Init: เปลี่ยนจากเรียก initFrontend ตรงๆ เป็นให้โหลดจาก Database ก่อน
+        window.onload = () => loadFromGoogleSheets();
     </script>
 </body>
 </html>
