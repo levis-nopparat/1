@@ -3,451 +3,441 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบเช็คชื่อพนักงาน</title>
-    <!-- โหลด Tailwind CSS สำหรับจัดการความสวยงาม -->
+    <title>ระบบเช็คชื่อและการเงินพนักงาน (Friendly Group)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- โหลด Font Awesome สำหรับไอคอนต่างๆ -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- โหลดฟอนต์ Sarabun (ภาษาไทย) -->
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Sarabun', sans-serif; }
-        
-        /* ซ่อน Scrollbar แนวนอน แต่ยังใช้เมาส์ไถเลื่อนได้ */
+        body { font-family: 'Prompt', sans-serif; background-color: #f1f5f9; display: flex; flex-direction: column; min-height: 100vh; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* สไตล์หลักสำหรับป้าย (Badge) ทั้ง Tag และ สถานะ */
-        .custom-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2px 8px;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            border: 1px solid rgba(0,0,0,0.1);
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            text-transform: uppercase;
-        }
-
-        /* เอฟเฟกต์เวลาเอาเมาส์ชี้ช่องที่กดได้ (Interactive Cells) */
-        .cell-interactive { cursor: pointer; transition: all 0.2s; }
-        .cell-interactive:hover { background-color: #f1f5f9; transform: scale(1.05); }
-
-        /* สไตล์สำหรับหัวตารางเวลาที่คลิกเพื่อแก้ไขได้ */
-        .time-header-editable { cursor: pointer; transition: color 0.2s; }
-        .time-header-editable:hover { color: #4f46e5; text-decoration: underline; }
-
-        /* Custom Scrollbar สำหรับตารางหลักให้ดูสวยงาม */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f8fafc; }
+        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .custom-badge { display: inline-flex; align-items: center; justify-content: center; padding: 2px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.05); text-transform: uppercase; cursor: pointer; transition: transform 0.1s;}
+        .custom-badge:hover { transform: scale(1.05); }
+        .cell-check { transition: all 0.15s ease; cursor: pointer; position: relative; }
+        .cell-check:hover { background-color: #e2e8f0; transform: scale(1.02); }
+        .cell-check:active { transform: scale(0.95); }
+        .remark-indicator { position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; background-color: #ef4444; border-radius: 50%; box-shadow: 0 0 0 2px white; cursor: pointer; z-index: 10; }
+        .auto-fill-text { font-size: 0.85rem; font-weight: bold; opacity: 0.5; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+<body class="text-slate-800">
 
-    <nav class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <!-- โลโก้และชื่อระบบ -->
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-clipboard-check text-2xl text-indigo-600"></i>
-                    <h1 class="text-xl font-bold text-slate-900">ระบบเช็คชื่อพนักงาน</h1>
+    <!-- ================= 1. Navbar ================= -->
+    <nav class="bg-slate-900 text-white shadow-lg sticky top-0 z-40">
+        <div class="w-full px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- โลโก้ -->
+                <div class="flex items-center gap-3 shrink-0">
+                    <i class="fas fa-gem text-indigo-400 text-2xl"></i>
+                    <h1 class="text-lg font-bold tracking-wide hidden sm:block">FRIENDLY GROUP</h1>
                 </div>
-                
-                <!-- เมนูนำทาง จะเปลี่ยนไปตามสถานะการเข้าสู่ระบบ (Login) -->
-                <div class="flex items-center gap-2 sm:gap-4 overflow-x-auto hide-scrollbar">
-                    <div id="navMenu" class="flex items-center gap-1 sm:gap-2 whitespace-nowrap">
-                        <button onclick="switchPage('attendance')" class="px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-indigo-600 transition-colors" id="nav-attendance">เช็คชื่อ</button>
-                        <button onclick="switchPage('employees')" class="px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-indigo-600 transition-colors" id="nav-employees">รายชื่อพนักงาน</button>
-                        
-                        <!-- เมนูสำหรับหัวหน้างานและ Admin -->
-                        <button onclick="switchPage('dashboard')" class="hidden px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-indigo-600 transition-colors" id="nav-dashboard">ประวัติการเช็ค</button>
-                        
-                        <!-- เมนูสำหรับ Admin เท่านั้น -->
-                        <button onclick="switchPage('settings')" class="hidden px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-indigo-600 transition-colors" id="nav-settings">ตั้งค่าระบบ</button>
-                        <button onclick="switchPage('sync')" class="hidden px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-indigo-600 transition-colors" id="nav-sync"><i class="fas fa-sync-alt mr-1"></i> ซิงค์ (CSV)</button>
-                    </div>
 
-                    <div class="h-6 w-px bg-slate-300 mx-1 hidden sm:block"></div>
-                    
-                    <!-- แสดงชื่อผู้ใช้งานปัจจุบัน -->
-                    <div class="flex flex-col items-end">
-                        <span id="currentUserDisplay" class="text-xs font-semibold text-indigo-600 hidden"></span>
+                <!-- เมนูหลัก -->
+                <div class="hidden md:flex flex-1 items-center justify-center space-x-1 overflow-x-auto hide-scrollbar px-4" id="mainNav"></div>
+
+                <!-- เวลา & ปุ่ม Login -->
+                <div class="flex items-center gap-4 shrink-0">
+                    <div class="hidden lg:flex flex-col items-end leading-tight text-right">
+                        <span id="realtimeDate" class="text-xs text-slate-300 font-medium tracking-wide">กำลังโหลด...</span>
                     </div>
-                    
-                    <!-- ปุ่ม Login / Logout -->
-                    <button id="authBtn" onclick="toggleAuth()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2 shrink-0">
-                        <i class="fas fa-sign-in-alt"></i> <span>Login</span>
+                    <button id="authBtn" onclick="handleAuthClick()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg">
+                        <i class="fas fa-sign-in-alt"></i> <span>เข้าสู่ระบบ</span>
                     </button>
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-slate-300 hover:text-white text-xl"><i class="fas fa-bars"></i></button>
                 </div>
             </div>
         </div>
+        
+        <div id="mobileMenu" class="md:hidden hidden bg-slate-800 pb-3 px-2 space-y-1"></div>
     </nav>
 
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full relative">
-        
-        <!-- ================= หน้า: เช็คชื่อพนักงาน (Attendance) ================= -->
-        <div id="page-attendance" class="page-section flex flex-col gap-6 h-full">
-            
-            <!-- แถบเครื่องมือ: เลือกคลับ (ร้าน) และ เลือกวันที่ -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between gap-4 items-center">
-                <!-- แถบปุ่มเลือกคลับ -->
-                <div class="flex-grow overflow-x-auto w-full sm:w-auto hide-scrollbar">
-                    <div class="flex gap-2 min-w-max" id="clubTabsContainer">
-                        <!-- โค้ด JS จะสร้างปุ่มคลับอัตโนมัติตรงนี้ -->
-                    </div>
-                </div>
-                
-                <!-- ตัวเลือกวันที่ สามารถย้อนหลังได้ -->
-                <div class="flex items-center gap-3 shrink-0 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
-                    <label class="text-sm font-medium text-slate-500 pl-2">วันที่:</label>
-                    <input type="date" id="datePicker" onchange="changeDate()" class="border-none bg-transparent px-2 py-1 text-sm font-semibold text-slate-700 focus:ring-0 outline-none cursor-pointer">
-                    <button onclick="setToday()" class="bg-white border border-slate-200 text-xs px-2 py-1 rounded shadow-sm hover:bg-slate-100">วันนี้</button>
-                </div>
-            </div>
+    <!-- แถบแสดงข้อมูลผู้ใช้ที่ Login -->
+    <div id="userInfoDisplay" class="hidden bg-indigo-50 border-b border-indigo-100 px-4 py-2 text-sm flex justify-between items-center shadow-sm">
+        <div class="flex items-center gap-2">
+            <i class="fas fa-user-circle text-indigo-500 text-lg"></i>
+            <span class="font-bold text-slate-700" id="userNameTxt"></span>
+            <span id="userRoleTxt" class="text-[10px] bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded-full font-bold"></span>
+        </div>
+        <div id="userPermTxt" class="text-xs text-slate-500 hidden sm:block font-medium"></div>
+    </div>
 
-            <!-- ตารางแสดงข้อมูลการเช็คชื่อ -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex-grow flex flex-col">
-                <div class="overflow-x-auto relative">
-                    <table class="w-full text-left border-collapse whitespace-nowrap min-w-max">
-                        <thead class="bg-slate-100 text-slate-700 uppercase text-xs font-semibold" id="tableHeader">
-                            <!-- โค้ด JS จะสร้างหัวตาราง (No, Tag, ชื่อ, เวลา...) ที่นี่ -->
-                        </thead>
-                        <tbody class="divide-y divide-slate-200 text-sm bg-white" id="tableBody">
-                            <!-- โค้ด JS จะดึงรายชื่อพนักงานที่มีสิทธิ์ทำงานในวันนี้มาแสดงที่นี่ -->
-                        </tbody>
-                    </table>
-                </div>
-                <!-- แสดงข้อความนี้กรณีคลับนั้นไม่มีพนักงานที่ทำงานในวันนี้ -->
-                <div id="emptyState" class="hidden p-10 text-center text-slate-500">
-                    <i class="fas fa-users-slash text-4xl mb-3 text-slate-300"></i>
-                    <p>ไม่มีรายชื่อพนักงานในคลับนี้ สำหรับวันที่เลือก</p>
-                </div>
+    <!-- ================= 2. Main Content ================= -->
+    <main class="flex-1 w-full max-w-full p-2 sm:p-4 lg:p-6 pb-20 relative">
+        
+        <!-- แถบวันที่ (ใช้ร่วมกันทุกหน้ายกเว้นหน้าตั้งค่า) -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 mb-4 flex flex-wrap justify-between items-center gap-3" id="globalDateBar">
+            <h2 id="pageTitle" class="text-lg font-bold text-slate-800">หน้าหลัก</h2>
+            <div class="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200 shadow-inner">
+                <button onclick="setToday()" class="px-3 py-1.5 text-xs font-bold text-indigo-600 hover:bg-white rounded transition-colors shadow-sm">วันนี้</button>
+                <input type="date" id="globalDatePicker" onchange="changeGlobalDate()" class="bg-transparent border-none text-sm font-bold text-slate-700 outline-none cursor-pointer pl-3 pr-2">
             </div>
         </div>
-
-        <!-- ================= หน้า: รายชื่อพนักงาน (Employees) ================= -->
-        <div id="page-employees" class="page-section hidden flex flex-col gap-6">
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between gap-4 items-center">
-                <h2 class="text-lg font-bold text-slate-800"><i class="fas fa-users mr-2"></i>จัดการรายชื่อพนักงาน</h2>
-                
-                <div class="flex gap-3 w-full sm:w-auto">
-                    <!-- ช่องค้นหาพนักงาน -->
-                    <div class="relative flex-grow">
-                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="searchEmpInput" onkeyup="renderEmployeeManageTable()" placeholder="ค้นหารหัส หรือ ชื่อ..." class="pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm w-full outline-none focus:border-indigo-500">
+        
+        <div id="pageContainer">
+            
+            <!-- ----------------- หน้า: เช็คชื่อ ----------------- -->
+            <section id="page-attendance" class="page-section hidden">
+                <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-3 mb-3 border-b border-slate-200" id="clubTabs"></div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse whitespace-nowrap min-w-max">
+                            <thead class="bg-slate-100 text-slate-600 text-[11px] sm:text-xs uppercase font-bold sticky top-0 z-10" id="attHeader"></thead>
+                            <tbody class="divide-y divide-slate-100 text-[13px] sm:text-sm bg-white" id="attBody"></tbody>
+                        </table>
                     </div>
-                    <!-- ปุ่มเพิ่มพนักงาน (แสดงเฉพาะ Admin/Supervisor) -->
-                    <button id="btnAddEmp" onclick="openEmpModal()" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm whitespace-nowrap">
+                </div>
+            </section>
+
+            <!-- ----------------- หน้า: จดดื่ม ----------------- -->
+            <section id="page-drinks" class="page-section hidden">
+                <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-3 mb-3 border-b border-slate-200" id="drinkClubTabs"></div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse whitespace-nowrap min-w-max">
+                            <thead class="bg-indigo-50 text-indigo-800 text-xs uppercase font-bold sticky top-0 z-10" id="drinkHeader"></thead>
+                            <tbody class="divide-y divide-slate-100 text-sm bg-white" id="drinkBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ----------------- หน้า: ข้อมูลส่วนตัว (พนักงาน Login) ----------------- -->
+            <section id="page-myprofile" class="page-section hidden space-y-6">
+                <!-- ส่วนแก้ไขข้อมูล -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex items-center gap-4 mb-6 border-b pb-4">
+                        <i class="fas fa-user-circle text-5xl text-indigo-400"></i>
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800">ข้อมูลส่วนตัว</h2>
+                            <p class="text-sm text-slate-500" id="myProfileNo"></p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+                        <div><label class="block text-xs font-bold text-slate-500 mb-1">ชื่อเล่น</label><input type="text" id="myProfileNick" class="w-full border rounded-lg px-3 py-2 text-sm outline-none bg-slate-50"></div>
+                        <div><label class="block text-xs font-bold text-slate-500 mb-1">ชื่อ-นามสกุล จริง</label><input type="text" id="myProfileFull" class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500"></div>
+                        <div class="md:col-span-2"><label class="block text-xs font-bold text-slate-500 mb-1">เลขบัญชีธนาคาร (สำหรับรับเงิน)</label><input type="text" id="myProfileBank" class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500" placeholder="เช่น กสิกรไทย 123-4-56789-0"></div>
+                    </div>
+                    <button onclick="saveMyProfile()" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-indigo-700">บันทึกข้อมูล</button>
+                </div>
+
+                <!-- สถิติ -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50 border-b px-4 py-3 font-bold text-slate-700"><i class="fas fa-calendar-check text-green-500 mr-2"></i>ประวัติเช็คชื่อ (เดือนนี้)</div>
+                        <div class="overflow-x-auto h-64"><table class="w-full text-sm"><thead class="bg-slate-100 text-xs sticky top-0"><tr><th class="px-4 py-2">วันที่</th><th class="px-4 py-2">เวลา</th><th class="px-4 py-2">สถานะ</th></tr></thead><tbody id="myAttHistory" class="divide-y"></tbody></table></div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50 border-b px-4 py-3 font-bold text-slate-700"><i class="fas fa-glass-cheers text-pink-500 mr-2"></i>ยอดดื่ม (เดือนนี้)</div>
+                        <div class="overflow-x-auto h-64"><table class="w-full text-sm"><thead class="bg-slate-100 text-xs sticky top-0"><tr><th class="px-4 py-2">วันที่</th><th class="px-4 py-2">รายละเอียด</th><th class="px-4 py-2 text-center">จำนวนดื่ม</th></tr></thead><tbody id="myDrinkHistory" class="divide-y"></tbody></table></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ----------------- หน้า: พนักงาน (จัดการ) ----------------- -->
+            <section id="page-employees" class="page-section hidden space-y-4">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div class="relative w-full sm:w-72">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="searchEmp" onkeyup="renderEmployees()" placeholder="ค้นหารหัส, ชื่อ..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                    </div>
+                    <button id="btnAddEmp" onclick="openEmpModal()" class="w-full sm:w-auto bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 shadow-sm">
                         <i class="fas fa-plus mr-1"></i> เพิ่มพนักงาน
                     </button>
                 </div>
-            </div>
+                <div id="empListContainer" class="space-y-6"></div>
+            </section>
 
-            <!-- ตารางแสดงรายชื่อพนักงาน แยกตามร้าน (คลับ) -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500">
-                        <tr>
-                            <th class="px-6 py-3">No. / รหัส</th>
-                            <th class="px-6 py-3">ป้าย (Tag)</th>
-                            <th class="px-6 py-3">ชื่อพนักงาน</th>
-                            <th class="px-6 py-3">ระยะเวลาทำงาน</th>
-                            <th class="px-6 py-3 text-right" id="empManageActionHeader">จัดการ</th>
-                        </tr>
-                    </thead>
-                    <tbody id="empManageTableBody" class="divide-y divide-slate-100 text-sm">
-                        <!-- โค้ด JS จะสร้างกลุ่มตารางแยกตามคลับที่นี่ -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- ================= หน้า: แดชบอร์ดประวัติ (Dashboard) ================= -->
-        <div id="page-dashboard" class="page-section hidden flex flex-col gap-6">
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex justify-between items-center">
-                <div>
-                    <h2 class="text-lg font-bold text-slate-800"><i class="fas fa-history mr-2"></i>ประวัติการเช็คชื่อวันนี้</h2>
-                    <p class="text-sm text-slate-500 mt-1" id="dashboardSubtitle">ดูประวัติการบันทึกสถานะ</p>
+            <!-- ----------------- หน้า: การเงิน (Admin Only) ----------------- -->
+            <section id="page-finance" class="page-section hidden space-y-6">
+                <!-- สรุปรวม -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                        <div class="text-xs font-bold text-slate-500 uppercase mb-1">ยอดค้างชำระทั้งหมด (ยอดเบิก)</div>
+                        <div class="text-3xl font-bold text-red-500" id="finTotalDebt">0 ฿</div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                        <div class="text-xs font-bold text-slate-500 uppercase mb-1">ยอดเสีย (พนักงานที่ถูกลบ)</div>
+                        <div class="text-3xl font-bold text-orange-500" id="finBadDebt">0 ฿</div>
+                    </div>
                 </div>
-                <div class="px-4 py-2 bg-slate-100 rounded-lg text-slate-700 font-medium">
-                    วันที่: <span id="dashboardDateDisplay"></span>
-                </div>
-            </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500">
-                        <tr>
-                            <th class="px-6 py-3">เวลาที่เช็ค</th>
-                            <th class="px-6 py-3">พนักงาน</th>
-                            <th class="px-6 py-3">สถานะ</th>
-                            <th class="px-6 py-3">ผู้บันทึก (หัวหน้างาน)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="dashboardTableBody" class="divide-y divide-slate-100 text-sm">
-                        <!-- ประวัติการเช็คชื่อจะแสดงที่นี่ -->
-                    </tbody>
-                </table>
-                <div id="emptyDashboard" class="hidden p-8 text-center text-slate-400">
-                    <p>ไม่มีประวัติการเช็คชื่อในวันนี้</p>
-                </div>
-            </div>
-        </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- รายชื่อพนักงานและยอด -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden lg:col-span-1 flex flex-col h-[500px]">
+                        <div class="p-3 border-b bg-slate-50"><input type="text" id="searchFin" onkeyup="renderFinanceList()" placeholder="ค้นหาพนักงาน..." class="w-full border rounded px-3 py-2 text-sm outline-none"></div>
+                        <div class="overflow-y-auto flex-1 p-2 space-y-2" id="finEmpList"></div>
+                    </div>
+                    <!-- รายละเอียดการเบิกของพนักงานที่เลือก / ตารางยอดเสีย -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden lg:col-span-2 flex flex-col h-[500px]">
+                        
+                        <!-- Header สลับโหมด -->
+                        <div class="bg-slate-50 border-b flex font-bold text-sm">
+                            <button id="tabFinLedger" onclick="switchFinTab('ledger')" class="flex-1 py-3 text-indigo-600 border-b-2 border-indigo-600 bg-white">ประวัติการเบิกรายบุคคล</button>
+                            <button id="tabFinBadDebt" onclick="switchFinTab('baddebt')" class="flex-1 py-3 text-slate-500 border-b-2 border-transparent hover:bg-slate-100">บัญชียอดเสีย (พนักงานถูกลบ)</button>
+                        </div>
 
-        <!-- ================= หน้า: ตั้งค่าระบบ (Settings) ================= -->
-        <div id="page-settings" class="page-section hidden flex flex-col gap-6">
-            <h2 class="text-xl font-bold text-slate-800"><i class="fas fa-cogs mr-2"></i>ตั้งค่าระบบ (Admin)</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- ตั้งค่าคลับและเวลา -->
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                    <h3 class="font-bold text-slate-700 mb-4 border-b pb-2"><i class="fas fa-layer-group mr-2"></i>จัดการร้าน (คลับ) และเวลาเช็คชื่อ</h3>
+                        <!-- โหมด: ประวัติรายบุคคล -->
+                        <div id="finLedgerArea" class="flex flex-col flex-1">
+                            <div class="p-4 border-b flex justify-between items-center bg-white">
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-lg" id="finSelName">กรุณาเลือกพนักงานจากเมนูซ้าย</h3>
+                                    <p class="text-xs text-slate-500" id="finSelBank"></p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-xs font-bold text-slate-500">ยอดค้างชำระ (ต้องคืน)</div>
+                                    <div class="text-2xl font-bold text-red-500" id="finSelBal">0 ฿</div>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-slate-50 border-b flex gap-2">
+                                <button onclick="openFinTxModal('advance')" id="btnFinAdv" disabled class="flex-1 bg-red-500 text-white py-2 rounded shadow-sm font-bold text-sm opacity-50"><i class="fas fa-hand-holding-usd mr-1"></i> เบิกเงินเพิ่ม</button>
+                                <button onclick="openFinTxModal('pay')" id="btnFinPay" disabled class="flex-1 bg-green-500 text-white py-2 rounded shadow-sm font-bold text-sm opacity-50"><i class="fas fa-money-bill-wave mr-1"></i> จ่ายคืน/หักเงิน</button>
+                            </div>
+                            <div class="overflow-y-auto flex-1 p-0">
+                                <table class="w-full text-sm text-left"><thead class="bg-slate-100 text-xs sticky top-0 shadow-sm"><tr><th class="px-4 py-2">วันที่/เวลา</th><th class="px-4 py-2">ประเภท</th><th class="px-4 py-2">จำนวนเงิน</th><th class="px-4 py-2">รายละเอียด</th><th class="px-4 py-2">ผู้บันทึก</th></tr></thead><tbody id="finTxBody" class="divide-y bg-white"></tbody></table>
+                            </div>
+                        </div>
+
+                        <!-- โหมด: ยอดเสีย -->
+                        <div id="finBadDebtArea" class="hidden flex-col flex-1 p-0 overflow-y-auto">
+                            <div class="p-4 bg-orange-50 border-b border-orange-100 text-sm text-orange-800">
+                                <i class="fas fa-info-circle mr-1"></i> ข้อมูลพนักงานที่ถูกลบออกจากระบบในขณะที่ยังมียอดค้างชำระ (ติดลบ)
+                            </div>
+                            <table class="w-full text-sm text-left"><thead class="bg-slate-100 text-xs sticky top-0"><tr><th class="px-4 py-2">วันที่ลบ</th><th class="px-4 py-2">รหัส/ชื่อ</th><th class="px-4 py-2">ยอดค้าง (บาท)</th></tr></thead><tbody id="finBadDebtBody" class="divide-y bg-white"></tbody></table>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- ----------------- หน้า: ประวัติลบพนักงาน (Admin Only) ----------------- -->
+            <section id="page-history" class="page-section hidden space-y-4">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4"><i class="fas fa-user-minus text-red-500 mr-2"></i>ประวัติการลบพนักงาน</h2>
+                    <div class="relative w-full sm:w-72 mb-4">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="searchDelHist" onkeyup="renderDeletedHistory()" placeholder="ค้นหารหัส, ชื่อ..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left"><thead class="bg-slate-100 text-xs uppercase border-b border-slate-200"><tr><th class="px-4 py-3">วัน/เวลา ที่ลบ</th><th class="px-4 py-3">รหัส</th><th class="px-4 py-3">ชื่อพนักงาน</th><th class="px-4 py-3">ผู้ทำรายการลบ</th></tr></thead><tbody id="delHistBody" class="divide-y divide-slate-100"></tbody></table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ----------------- หน้า: Dashboard ----------------- -->
+            <section id="page-dashboard" class="page-section hidden space-y-6">
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4" id="dashSummaryCards"></div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                        <h4 class="font-bold text-slate-700 mb-4 border-b pb-2"><i class="fas fa-chart-pie text-indigo-500 mr-2"></i>สถานะพนักงาน</h4>
+                        <div id="dashTagsBreakdown" class="space-y-4"></div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 lg:col-span-2 overflow-hidden flex flex-col">
+                        <div class="bg-slate-50 border-b px-5 py-3 flex flex-wrap gap-2 justify-between items-center">
+                            <h4 class="font-bold text-slate-700"><i class="fas fa-trophy text-yellow-500 mr-2"></i>จัดอันดับพนักงาน</h4>
+                            <div class="flex gap-2">
+                                <select id="lbClubFilter" onchange="renderLeaderboard()" class="border border-slate-200 rounded px-2 py-1 text-sm outline-none"><option value="all">ทุกคลับ</option></select>
+                                <select id="lbType" onchange="renderLeaderboard()" class="border border-slate-200 rounded px-2 py-1 text-sm outline-none">
+                                    <option value="drinks">ได้ดื่มเยอะสุด</option><option value="cr">เข้า CR บ่อยสุด</option><option value="work">มาทำงานมากสุด</option><option value="absent">ขาดงาน (X) มากสุด</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto flex-1 h-64">
+                            <table class="w-full text-left text-sm whitespace-nowrap"><thead class="bg-white text-slate-500 text-xs uppercase sticky top-0 shadow-sm border-b"><tr><th class="px-4 py-2">อันดับ</th><th class="px-4 py-2">พนักงาน</th><th class="px-4 py-2">ร้าน</th><th class="px-4 py-2 text-center" id="lbValueHeader">ยอดรวม</th></tr></thead><tbody id="dashLeaderboard" class="divide-y divide-slate-100 bg-white"></tbody></table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ----------------- หน้า: ตั้งค่า (Admin Only) ----------------- -->
+            <section id="page-settings" class="page-section hidden space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     
-                    <div class="flex gap-2 mb-4">
-                        <input type="text" id="newClubName" placeholder="พิมพ์ชื่อร้าน/คลับใหม่..." class="border border-slate-300 rounded-md px-3 py-1.5 text-sm flex-grow outline-none">
-                        <button onclick="addClub()" class="bg-slate-800 text-white px-3 py-1.5 rounded-md text-sm">เพิ่มคลับ</button>
-                    </div>
-
-                    <div id="clubSettingsList" class="space-y-4 max-h-[400px] overflow-y-auto pr-2">
-                        <!-- รายการคลับและเวลาจะแสดงที่นี่ -->
-                    </div>
-                </div>
-
-                <div class="space-y-6">
-                    <!-- ตั้งค่าป้ายกำกับ (Tags) -->
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                        <div class="flex justify-between items-center border-b pb-2 mb-4">
-                            <h3 class="font-bold text-slate-700"><i class="fas fa-tags mr-2"></i>ตั้งค่าป้ายกำกับ (Tags)</h3>
-                            <button onclick="openConfigModal('tag')" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded hover:bg-indigo-100 font-medium">+ เพิ่มใหม่</button>
+                    <!-- เวลาอัตโนมัติ -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm lg:col-span-2 flex flex-wrap gap-4 items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-slate-700"><i class="fas fa-clock mr-2"></i>ตั้งเวลาขาดงานอัตโนมัติ</h3>
+                            <p class="text-xs text-slate-500">หากพนักงานไม่มีข้อมูลเช็คชื่อหลังเวลานี้ ระบบจะปรับเป็นขาด (X) อัตโนมัติในวันนั้น</p>
                         </div>
-                        <div id="tagsSettingsList" class="flex flex-wrap gap-3"></div>
-                    </div>
-
-                    <!-- ตั้งค่าสถานะเช็คชื่อ (Statuses) -->
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                        <div class="flex justify-between items-center border-b pb-2 mb-4">
-                            <h3 class="font-bold text-slate-700"><i class="fas fa-check-circle mr-2"></i>ตั้งค่าสถานะเช็คชื่อ</h3>
-                            <button onclick="openConfigModal('status')" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded hover:bg-indigo-100 font-medium">+ เพิ่มใหม่</button>
+                        <div class="flex gap-2">
+                            <input type="time" id="setAutoAbsent" class="border rounded-lg px-3 py-1.5 outline-none">
+                            <button onclick="saveAutoAbsent()" class="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-sm">บันทึก</button>
                         </div>
-                        <div id="statusSettingsList" class="flex flex-wrap gap-3"></div>
-                        <p class="text-xs text-slate-400 mt-3">* หากพิมพ์สถานะเองในตาราง ระบบจะใช้กรอบสีเทาเป็นค่าเริ่มต้น</p>
                     </div>
 
-                    <!-- ตั้งค่าหัวหน้างาน (Supervisors) -->
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                        <h3 class="font-bold text-slate-700 mb-4 border-b pb-2"><i class="fas fa-user-shield mr-2"></i>จัดการผู้ใช้งาน (หัวหน้างาน)</h3>
-                        <p class="text-xs text-slate-500 mb-3">สร้างบัญชีให้หัวหน้างานเข้าสู่ระบบ *รหัสผ่าน(PIN) ต้องเป็นตัวเลข 6 หลัก</p>
-                        
+                    <!-- คลับและเวลา -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="font-bold text-slate-700 border-b pb-2 mb-4"><i class="fas fa-store mr-2"></i>จัดการร้านและเวลา</h3>
                         <div class="flex gap-2 mb-4">
-                            <input type="text" id="newSupName" placeholder="ชื่อหัวหน้างาน" class="border border-slate-300 rounded-md px-3 py-1.5 text-sm w-1/2 outline-none">
-                            <input type="text" id="newSupId" placeholder="PIN 6 หลัก" maxlength="6" class="border border-slate-300 rounded-md px-3 py-1.5 text-sm w-1/3 outline-none text-center">
-                            <button onclick="addSupervisor()" class="bg-slate-800 text-white px-3 py-1.5 rounded-md text-sm">เพิ่ม</button>
+                            <input type="text" id="setClubName" placeholder="ชื่อคลับใหม่" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm flex-1 outline-none">
+                            <button onclick="addClub()" class="bg-slate-800 text-white px-4 py-1.5 rounded-lg text-sm">เพิ่ม</button>
                         </div>
-                        
-                        <ul id="supervisorList" class="divide-y divide-slate-100 text-sm max-h-48 overflow-y-auto pr-2">
-                            <!-- รายชื่อหัวหน้างาน -->
-                        </ul>
+                        <div id="setClubList" class="space-y-3 max-h-[300px] overflow-y-auto pr-2"></div>
+                    </div>
+
+                    <!-- หมวดหมู่ดื่ม -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="font-bold text-slate-700 border-b pb-2 mb-4"><i class="fas fa-glass-martini mr-2"></i>หมวดหมู่จดดื่ม</h3>
+                        <div class="flex gap-2 mb-4">
+                            <input type="text" id="setDrinkCatName" placeholder="เช่น ดื่มบนฟลอร์, เลขโต๊ะ..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm flex-1 outline-none">
+                            <button onclick="addDrinkCat()" class="bg-slate-800 text-white px-4 py-1.5 rounded-lg text-sm">เพิ่ม</button>
+                        </div>
+                        <div id="setDrinkCatList" class="flex flex-wrap gap-2"></div>
+                    </div>
+
+                    <!-- จัดการ Admin -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm lg:col-span-2">
+                        <h3 class="font-bold text-red-600 border-b border-red-100 pb-2 mb-4"><i class="fas fa-user-secret mr-2"></i>จัดการบัญชี Admin</h3>
+                        <div class="flex flex-wrap gap-2 mb-4 bg-red-50 p-3 rounded-lg border border-red-100">
+                            <input type="text" id="setAdminName" placeholder="ชื่อ Admin (เช่น ADMIN02)" class="border rounded-lg px-2 py-1.5 text-sm flex-1 outline-none">
+                            <input type="text" id="setAdminPin" placeholder="PIN 6 หลัก" maxlength="6" class="border rounded-lg px-2 py-1.5 text-sm w-32 text-center outline-none">
+                            <button onclick="addAdmin()" class="bg-red-600 text-white px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm">เพิ่ม Admin</button>
+                        </div>
+                        <div class="overflow-x-auto"><table class="w-full text-sm text-left"><tbody id="setAdminList" class="divide-y divide-slate-100"></tbody></table></div>
+                    </div>
+
+                    <!-- หัวหน้างาน -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm lg:col-span-2">
+                        <h3 class="font-bold text-slate-700 border-b pb-2 mb-4"><i class="fas fa-user-shield mr-2"></i>จัดการบัญชี หัวหน้างาน</h3>
+                        <div class="flex flex-wrap gap-2 mb-4 bg-slate-50 p-3 rounded-lg border">
+                            <input type="text" id="setSupName" placeholder="ชื่อหัวหน้า" class="border rounded-lg px-2 py-1.5 text-sm flex-1 outline-none">
+                            <input type="text" id="setSupPin" placeholder="PIN 6 หลัก" maxlength="6" class="border rounded-lg px-2 py-1.5 text-sm w-28 text-center outline-none">
+                            
+                            <!-- เลือกหลายร้านได้ (ใช้ select multiple แบบพื้นฐานหรือ Checkbox) -->
+                            <div class="w-full text-xs font-bold text-slate-600 mt-2 mb-1">เลือกร้านที่ดูแล:</div>
+                            <div id="setSupClubCheckboxes" class="w-full flex flex-wrap gap-3 mb-2"></div>
+
+                            <div class="w-full text-xs font-bold text-slate-600 mt-2 mb-1">เลือกสิทธิ์การใช้งาน:</div>
+                            <div class="w-full grid grid-cols-2 md:grid-cols-4 gap-2 text-xs font-medium text-slate-600">
+                                <label><input type="checkbox" id="permAtt" checked class="mr-1"> เช็คชื่อ</label>
+                                <label><input type="checkbox" id="permDrink" checked class="mr-1"> จดดื่ม</label>
+                                <label><input type="checkbox" id="permEmp" class="mr-1"> จัดการพนักงาน</label>
+                                <label><input type="checkbox" id="permDash" class="mr-1"> ดู Dashboard</label>
+                            </div>
+                            <button onclick="addSup()" class="w-full bg-slate-800 text-white px-4 py-2 rounded-lg text-sm mt-3 font-bold">เพิ่มบัญชีหัวหน้างาน</button>
+                        </div>
+                        <div class="overflow-x-auto"><table class="w-full text-sm text-left"><tbody id="setSupList" class="divide-y divide-slate-100"></tbody></table></div>
                     </div>
                 </div>
-            </div>
+            </section>
         </div>
-
-        <!-- ================= หน้า: ซิงค์ข้อมูล Google Sheets (CSV) ================= -->
-        <div id="page-sync" class="page-section hidden flex flex-col gap-6">
-            <h2 class="text-xl font-bold text-slate-800"><i class="fas fa-file-csv mr-2"></i>นำเข้าและส่งออกข้อมูล (CSV Sync)</h2>
-            
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <p class="text-sm text-slate-600 mb-6">คุณสามารถส่งออกข้อมูลการเช็คชื่อทั้งหมดเป็นไฟล์ CSV เพื่อนำไปเปิดใน <b>Google Sheets</b> หรือสามารถนำเข้าข้อมูล CSV เพื่อปรับปรุงฐานข้อมูลพนักงานได้</p>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <!-- การส่งออก (Export) -->
-                    <div class="border border-slate-200 p-5 rounded-lg bg-slate-50 flex flex-col items-center text-center">
-                        <i class="fas fa-file-export text-4xl text-green-500 mb-3"></i>
-                        <h3 class="font-bold text-slate-800 mb-2">ส่งออกข้อมูลการเช็คชื่อ (Export)</h3>
-                        <p class="text-xs text-slate-500 mb-4">ดาวน์โหลดข้อมูลการเช็คชื่อทั้งหมดเป็นไฟล์ .csv สำหรับนำไปวิเคราะห์ต่อใน Google Sheets</p>
-                        <button onclick="exportCSV()" class="mt-auto bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-sm w-full">
-                            <i class="fas fa-download mr-2"></i> ดาวน์โหลด CSV
-                        </button>
-                    </div>
-
-                    <!-- การนำเข้า (Import) - สำหรับการสาธิต -->
-                    <div class="border border-slate-200 p-5 rounded-lg bg-slate-50 flex flex-col items-center text-center">
-                        <i class="fas fa-file-import text-4xl text-indigo-500 mb-3"></i>
-                        <h3 class="font-bold text-slate-800 mb-2">นำเข้าข้อมูล (Import)</h3>
-                        <p class="text-xs text-slate-500 mb-4">ในเวอร์ชั่นนี้ การนำเข้าข้อมูลอัตโนมัติจาก Google Sheets ทำได้ผ่านการอัปโหลดไฟล์ CSV ที่บันทึกมาจาก Google Sheets</p>
-                        
-                        <div class="w-full mt-auto">
-                            <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="importCSV(event)">
-                            <button onclick="document.getElementById('csvFileInput').click()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-sm w-full">
-                                <i class="fas fa-upload mr-2"></i> อัปโหลดไฟล์ CSV
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </main>
 
-    <div id="modalOverlay" class="fixed inset-0 bg-slate-900 bg-opacity-40 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+    <!-- ================= 3. Modals ================= -->
+    <div id="modalOverlay" class="fixed inset-0 bg-slate-900/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
         
-        <!-- Modal 1: Login -->
-        <div id="loginModal" class="modal-content hidden bg-white rounded-xl shadow-xl w-full max-w-xs overflow-hidden">
-            <div class="bg-indigo-600 p-4 text-center">
-                <i class="fas fa-lock text-3xl text-white mb-2"></i>
-                <h3 class="text-lg font-bold text-white">เข้าสู่ระบบ (USER ID)</h3>
+        <!-- Login Modal -->
+        <div id="loginModal" class="modal-content hidden bg-white rounded-2xl shadow-2xl w-full max-w-xs overflow-hidden my-auto">
+            <div class="bg-slate-900 p-4 text-center relative border-b border-slate-800">
+                <button onclick="closeModals()" class="absolute top-2 right-3 text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
+                <i class="fas fa-lock text-3xl text-indigo-400 mb-2"></i><h3 class="text-lg font-bold text-white">เข้าสู่ระบบ</h3>
             </div>
-            <div class="p-6">
-                <p class="text-xs text-slate-500 text-center mb-4">Admin ใส่ <span class="font-bold">000000</span><br>หัวหน้างานใส่ PIN 6 หลัก</p>
-                <input type="password" id="loginPin" maxlength="6" class="w-full border-2 border-slate-200 rounded-lg px-4 py-3 text-center text-2xl font-bold tracking-widest focus:border-indigo-500 outline-none transition-colors" placeholder="------" onkeypress="if(event.key === 'Enter') handleLogin()">
-                <p id="loginError" class="text-red-500 text-xs mt-2 text-center hidden">รหัสผ่านไม่ถูกต้อง!</p>
-                
-                <div class="mt-6 flex gap-2">
-                    <button onclick="closeModals()" class="flex-1 py-2 bg-slate-100 text-slate-600 rounded-lg font-medium hover:bg-slate-200">ยกเลิก</button>
-                    <button onclick="handleLogin()" class="flex-1 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700">ยืนยัน</button>
+            <div class="flex border-b text-sm font-bold">
+                <button id="tabSupLogin" onclick="switchLoginTab('sup')" class="flex-1 py-2 text-indigo-600 border-b-2 border-indigo-600 bg-slate-50">Admin/หัวหน้า</button>
+                <button id="tabEmpLogin" onclick="switchLoginTab('emp')" class="flex-1 py-2 text-slate-400 border-b-2 border-transparent hover:bg-slate-50">พนักงาน</button>
+            </div>
+            <!-- Admin/Sup (Numpad) -->
+            <div id="supLoginArea" class="p-5">
+                <div class="flex justify-center gap-2 mb-4" id="pinDots"><div class="w-3 h-3 rounded-full bg-slate-200 pin-dot"></div><div class="w-3 h-3 rounded-full bg-slate-200 pin-dot"></div><div class="w-3 h-3 rounded-full bg-slate-200 pin-dot"></div><div class="w-3 h-3 rounded-full bg-slate-200 pin-dot"></div><div class="w-3 h-3 rounded-full bg-slate-200 pin-dot"></div><div class="w-3 h-3 rounded-full bg-slate-200 pin-dot"></div></div>
+                <p id="loginError" class="text-red-500 text-xs text-center mb-3 hidden font-bold">รหัสไม่ถูกต้อง!</p>
+                <div class="grid grid-cols-3 gap-2">
+                    <button class="bg-slate-100 hover:bg-slate-200 py-3 rounded-lg text-lg font-bold" onclick="typePin(1)">1</button><button class="bg-slate-100 hover:bg-slate-200 py-3 rounded-lg text-lg font-bold" onclick="typePin(2)">2</button><button class="bg-slate-100 hover:bg-slate-200 py-3 rounded-lg text-lg font-bold" onclick="typePin(3)">3</button><button class="bg-slate-100 hover:bg-slate-200 py-3 rounded-lg text-lg font-bold" onclick="typePin(4)">4</button><button class="bg-slate-100 hover:bg-slate-200 py-3 rounded-lg text-lg font-bold" onclick="typePin(5)">5</button><button class="bg-slate-100 hover:bg-slate-200 py-3 rounded-lg text-lg font-bold" onclick="typePin(6)">6</button><button class="bg-slate-100 hover:bg-slate-200 py-3 rounded-lg text-lg font-bold" onclick="typePin(7)">7</button><button class="bg-slate-100 hover:bg-slate-200 py-3 rounded-lg text-lg font-bold" onclick="typePin(8)">8</button><button class="bg-slate-100 hover:bg-slate-200 py-3 rounded-lg text-lg font-bold" onclick="typePin(9)">9</button><button class="bg-red-50 hover:bg-red-100 py-3 rounded-lg text-lg font-bold text-red-500" onclick="typePin('C')">C</button><button class="bg-slate-100 hover:bg-slate-200 py-3 rounded-lg text-lg font-bold" onclick="typePin(0)">0</button><button class="bg-slate-100 hover:bg-slate-200 py-3 rounded-lg text-lg font-bold text-slate-500" onclick="typePin('D')"><i class="fas fa-backspace"></i></button>
                 </div>
             </div>
-        </div>
-
-        <!-- Modal 2: เลือกลงสถานะ (เวลาคลิกที่ช่องเวลาในตาราง) -->
-        <div id="statusModal" class="modal-content hidden bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
-            <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <h3 class="text-md font-bold text-slate-800" id="statusModalTitle">บันทึกเวลา</h3>
-                <button onclick="closeModals()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="p-5">
-                <p class="text-sm text-slate-600 mb-3">เลือกสถานะ:</p>
-                <div id="statusButtonsContainer" class="flex flex-wrap gap-2 mb-4">
-                    <!-- ปุ่มสถานะสร้างจาก JS -->
-                </div>
-                
-                <div class="border-t pt-4 border-slate-100">
-                    <p class="text-sm text-slate-600 mb-2">หรือ ระบุสถานะ/ข้อความอื่นๆ (จะแสดงกรอบสีเทา):</p>
-                    <div class="flex gap-2">
-                        <input type="text" id="customStatusInput" placeholder="พิมพ์ข้อความ..." class="flex-grow border border-slate-300 rounded-md px-3 py-1.5 text-sm outline-none focus:border-indigo-500">
-                        <button onclick="saveCustomStatus()" class="bg-slate-700 text-white px-3 py-1.5 rounded-md text-sm hover:bg-slate-800">บันทึก</button>
-                    </div>
-                </div>
-                <div class="mt-4 flex justify-between items-center text-xs text-slate-400">
-                    <button onclick="clearStatus()" class="text-red-500 hover:underline"><i class="fas fa-eraser mr-1"></i>ลบข้อมูลช่องนี้</button>
-                    <span id="statusCheckedBy"></span>
-                </div>
+            <!-- Employee (Text) -->
+            <div id="empLoginArea" class="p-6 hidden">
+                <p class="text-xs text-slate-500 mb-2 text-center">กรอกรหัสพนักงาน (เช่น F601, 601)</p>
+                <input type="text" id="empLoginId" placeholder="รหัสพนักงาน" class="w-full border-2 border-slate-200 rounded-lg px-4 py-3 text-center text-lg font-bold outline-none focus:border-indigo-500 uppercase">
+                <p id="empLoginError" class="text-red-500 text-xs text-center mt-2 hidden font-bold">ไม่พบรหัสพนักงานนี้</p>
+                <button onclick="verifyEmpLogin()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg mt-4 hover:bg-indigo-700">เข้าสู่ระบบ</button>
             </div>
         </div>
 
-        <!-- Modal 3: เลือก Tag (เวลาจิ้มที่ช่อง Tag ในตาราง) -->
-        <div id="tagSelectModal" class="modal-content hidden bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
+        <!-- Employee Form Modal -->
+        <div id="empFormModal" class="modal-content hidden bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden my-auto">
             <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <h3 class="text-md font-bold text-slate-800" id="tagSelectTitle">เลือกป้ายกำกับ (Tag)</h3>
-                <button onclick="closeModals()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="p-5">
-                <p class="text-sm text-slate-600 mb-3">เลือก Tag ให้พนักงาน:</p>
-                <div id="tagSelectButtonsContainer" class="flex flex-wrap gap-3 mb-4">
-                    <!-- ปุ่ม Tag สร้างจาก JS -->
-                </div>
-                <div class="mt-4 border-t border-slate-100 pt-4">
-                    <button onclick="clearTag()" class="text-red-500 hover:underline text-sm"><i class="fas fa-times-circle mr-1"></i>ลบ Tag ของพนักงานคนนี้</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Modal 4: เพิ่ม/แก้ไข ข้อมูลพนักงาน (มีระบบตั้งวันที่ทำงาน) -->
-        <div id="employeeModal" class="modal-content hidden bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-            <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <h3 class="text-md font-bold text-slate-800" id="empModalTitle">ข้อมูลพนักงาน</h3>
-                <button onclick="closeModals()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+                <h3 class="text-md font-bold text-slate-800" id="empFormTitle">ข้อมูลพนักงาน</h3>
+                <button onclick="closeModals()" class="text-slate-400 hover:text-slate-800"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-5 space-y-4">
-                <input type="hidden" id="empFormId">
+                <input type="hidden" id="empId">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-bold text-slate-600 mb-1">รหัส (No.) *</label><input type="text" id="empNo" class="w-full border rounded-lg px-3 py-2 text-sm outline-none uppercase" placeholder="เช่น 601"></div>
+                    <div><label class="block text-xs font-bold text-slate-600 mb-1">ร้าน (Club) *</label><select id="empClub" class="w-full border rounded-lg px-3 py-2 text-sm outline-none"></select></div>
+                </div>
+                <div><label class="block text-xs font-bold text-slate-600 mb-1">ชื่อเล่น *</label><input type="text" id="empName" class="w-full border rounded-lg px-3 py-2 text-sm outline-none"></div>
+                
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">รหัส (No.) <span class="text-red-500">*</span></label>
-                        <input type="text" id="empFormNo" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm outline-none focus:border-indigo-500" placeholder="เช่น 601">
+                        <label class="block text-xs font-bold text-slate-600 mb-1">สัญญาลงงาน (วัน)</label>
+                        <select id="empContractDays" onchange="calcEndDate()" class="w-full border rounded-lg px-3 py-2 text-sm outline-none"><option value="0">ทำประจำ (ไม่มีกำหนด)</option><option value="10">10 วัน</option><option value="11">11 วัน</option><option value="12">12 วัน</option><option value="13">13 วัน</option><option value="14">14 วัน</option><option value="15">15 วัน</option></select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">ร้าน (คลับ) <span class="text-red-500">*</span></label>
-                        <select id="empFormClub" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm outline-none focus:border-indigo-500"></select>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">โควต้าลาส่าย (ครั้ง)</label>
+                        <input type="number" id="empLateLimit" class="w-full border rounded-lg px-3 py-2 text-sm outline-none" value="3" min="0">
                     </div>
                 </div>
-                
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">ชื่อพนักงาน <span class="text-red-500">*</span></label>
-                    <input type="text" id="empFormName" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm outline-none focus:border-indigo-500">
+                <div class="border rounded-lg p-3 bg-slate-50">
+                    <label class="block text-[10px] text-slate-500 mb-1">เริ่มวันที่</label><input type="date" id="empStart" onchange="calcEndDate()" class="w-full border rounded px-2 py-1.5 text-sm outline-none">
+                    <label class="block text-[10px] text-slate-500 mb-1 mt-2">ถึงวันที่ (คำนวณอัตโนมัติ)</label><input type="date" id="empEnd" class="w-full border rounded px-2 py-1.5 text-sm outline-none">
                 </div>
-                
-                <!-- ตั้งค่าระยะเวลาทำงาน -->
-                <div class="border border-slate-200 rounded-lg p-3 bg-slate-50">
-                    <label class="block text-xs font-bold text-slate-700 mb-2"><i class="far fa-calendar-alt mr-1"></i> ระยะเวลาทำงาน (เว้นว่างไว้ถ้าทำตลอด)</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-[10px] text-slate-500 mb-1">เริ่มงานวันที่</label>
-                            <input type="date" id="empFormStart" class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] text-slate-500 mb-1">ถึงวันที่</label>
-                            <input type="date" id="empFormEnd" class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm outline-none">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pt-4 flex justify-end gap-2 border-t mt-2 border-slate-100">
-                    <button type="button" onclick="closeModals()" class="px-4 py-2 text-sm text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200">ยกเลิก</button>
-                    <button type="button" onclick="saveEmployee()" class="px-4 py-2 text-sm text-white bg-indigo-600 rounded-md hover:bg-indigo-700">บันทึกข้อมูล</button>
+                <div class="flex justify-end gap-2 pt-4 border-t">
+                    <button onclick="closeModals()" class="px-4 py-2 text-sm bg-slate-100 rounded-lg hover:bg-slate-200 font-bold">ยกเลิก</button>
+                    <button onclick="saveEmp()" class="px-4 py-2 text-sm text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 font-bold">บันทึก</button>
                 </div>
             </div>
         </div>
 
-        <!-- Modal 5: สร้าง/แก้ไข สีและรูปลักษณ์ของ Tag หรือ Status -->
-        <div id="configItemModal" class="modal-content hidden bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
-            <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <h3 class="text-md font-bold text-slate-800" id="configModalTitle">ตั้งค่าสี/ป้ายกำกับ</h3>
-                <button onclick="closeModals()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+        <!-- Drink Modal (เลือกจำนวนและประเภทดื่ม) -->
+        <div id="drinkModal" class="modal-content hidden bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden my-auto">
+            <div class="px-5 py-4 border-b border-indigo-100 flex justify-between items-center bg-indigo-50">
+                <h3 class="text-md font-bold text-indigo-800"><i class="fas fa-glass-cheers mr-2"></i>บันทึกยอดดื่ม</h3>
+                <button onclick="closeModals()" class="text-indigo-400 hover:text-indigo-800"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-5 space-y-4">
-                <input type="hidden" id="configType">
-                <input type="hidden" id="configId">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">ข้อความ (สัญลักษณ์)</label>
-                    <input type="text" id="configLabel" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm outline-none focus:border-indigo-500">
+                <div class="text-center mb-4">
+                    <div class="text-xs text-slate-500 font-bold">พนักงาน: <span id="dmEmpName" class="text-indigo-600"></span></div>
+                    <div class="text-[10px] text-slate-400">เวลา: <span id="dmTime"></span></div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">สีพื้นหลัง (BG)</label>
-                        <input type="color" id="configBgColor" class="w-full h-10 border border-slate-300 rounded-md cursor-pointer">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">สีตัวอักษร (Text)</label>
-                        <input type="color" id="configTextColor" class="w-full h-10 border border-slate-300 rounded-md cursor-pointer">
-                    </div>
-                </div>
+                <input type="hidden" id="dmEmpId"><input type="hidden" id="dmTimeVal">
                 
-                <div class="mt-4 p-4 border rounded-lg bg-slate-50 text-center flex justify-center items-center gap-3">
-                    <span class="text-xs text-slate-500">ตัวอย่างที่จะแสดง:</span>
-                    <span id="configPreview" class="custom-badge px-3 py-1 border-gray-200">ตัวอย่าง</span>
+                <div><label class="block text-xs font-bold text-slate-600 mb-1">จำนวนดื่ม</label><input type="number" id="dmAmount" min="0" class="w-full border rounded-lg px-3 py-2 text-lg text-center font-bold outline-none focus:border-indigo-500" placeholder="0"></div>
+                <div><label class="block text-xs font-bold text-slate-600 mb-1">หมวดหมู่</label><select id="dmCategory" class="w-full border rounded-lg px-3 py-2 text-sm outline-none bg-slate-50"></select></div>
+                <div><label class="block text-xs font-bold text-slate-600 mb-1">รายละเอียดเพิ่มเติม (เช่น เลขโต๊ะ)</label><input type="text" id="dmDetail" class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500" placeholder="-"></div>
+                
+                <div class="flex justify-between items-center pt-4 border-t border-slate-100 mt-2">
+                    <button onclick="deleteDrink()" class="text-red-500 hover:underline text-xs font-bold"><i class="fas fa-trash mr-1"></i>ลบข้อมูล</button>
+                    <button onclick="saveDrink()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-indigo-700">บันทึก</button>
                 </div>
+            </div>
+        </div>
 
-                <div class="pt-4 flex justify-between gap-2 border-t border-slate-100 mt-2">
-                    <button type="button" id="btnDeleteConfig" onclick="deleteConfigItem()" class="px-3 py-2 text-sm text-red-500 hover:bg-red-50 rounded-md hidden"><i class="fas fa-trash"></i> ลบ</button>
-                    <div class="flex gap-2 ml-auto">
-                        <button type="button" onclick="closeModals()" class="px-4 py-2 text-sm text-slate-600 bg-slate-100 rounded-md">ยกเลิก</button>
-                        <button type="button" onclick="saveConfigItem()" class="px-4 py-2 text-sm text-white bg-indigo-600 rounded-md">บันทึก</button>
-                    </div>
-                </div>
+        <!-- Finance Transaction Modal -->
+        <div id="finTxModal" class="modal-content hidden bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden my-auto">
+            <div class="px-5 py-4 border-b flex justify-between items-center" id="finTxHead">
+                <h3 class="text-md font-bold text-white" id="finTxTitle">ทำรายการ</h3><button onclick="closeModals()" class="text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-5 space-y-4">
+                <input type="hidden" id="finTxType">
+                <div class="text-xs font-bold text-slate-500 text-center">พนักงาน: <span id="finTxEmpName" class="text-slate-800"></span></div>
+                <div><label class="block text-xs font-bold text-slate-600 mb-1">จำนวนเงิน (บาท)</label><input type="number" id="finTxAmt" min="1" class="w-full border rounded-lg px-3 py-3 text-xl text-center font-bold outline-none focus:border-slate-500"></div>
+                <div><label class="block text-xs font-bold text-slate-600 mb-1">ค่าอะไร / รายละเอียด</label><input type="text" id="finTxReason" class="w-full border rounded-lg px-3 py-2 text-sm outline-none" placeholder="เช่น ค่าชุด, คืนเงินสด..."></div>
+                <div class="pt-4 border-t"><button onclick="saveFinTx()" class="w-full bg-slate-800 text-white px-4 py-3 rounded-lg text-sm font-bold shadow-sm hover:bg-slate-700">บันทึกรายการ</button></div>
             </div>
         </div>
 
     </div>
 
     <script>
-        // ----------------- โครงสร้างข้อมูลตั้งต้น (Default Data) -----------------
+        // --- Database Structure (V6) ---
         const defaultData = {
+            settings: { autoAbsentTime: "10:00" },
             users: [
-                { id: '000000', name: 'Administrator', role: 'admin' }
+                { id: '000000', name: 'Administrator', role: 'admin', isMainAdmin: true }
             ],
             clubs: [
                 { id: 'c1', name: 'FRIENDLY CLUB', times: ['00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00', '07:00'] },
@@ -455,1003 +445,456 @@
                 { id: 'c3', name: 'CF MAN CLUB', times: ['23:40', '01:40', '02:40', '03:40', '04:40', '05:40', '06:40'] }
             ],
             tags: [
-                { id: 't1', label: 'ST', bg: '#3b82f6', text: '#ffffff' }, // สีฟ้า
-                { id: 't2', label: 'CR', bg: '#eab308', text: '#000000' }, // สีเหลือง
-                { id: 't3', label: 'SL', bg: '#84cc16', text: '#000000' }  // สีเขียว
+                { id: 't1', label: 'ST', bg: '#22c55e', text: '#ffffff' }, { id: 't2', label: 'SL', bg: '#3b82f6', text: '#ffffff' }, { id: 't3', label: 'CR', bg: '#eab308', text: '#000000' }, { id: 't4', label: 'จบงาน', bg: '#94a3b8', text: '#ffffff' }
             ],
             statuses: [
-                { id: 's1', label: '/', bg: '#22c55e', text: '#ffffff' }, // เครื่องหมายถูก (มา)
-                { id: 's2', label: 'X', bg: '#ef4444', text: '#ffffff' }, // กากบาท (ขาด)
-                { id: 's3', label: 'L', bg: '#f97316', text: '#ffffff' }  // ตัว L (ลา)
+                { id: 's1', label: '/', bg: '#22c55e', text: '#ffffff' }, { id: 's2', label: 'X', bg: '#ef4444', text: '#ffffff' }, { id: 's3', label: 'L', bg: '#f97316', text: '#ffffff' }, { id: 's4', label: 'กต', bg: '#8b5cf6', text: '#ffffff' }, { id: 's5', label: 'ส', bg: '#ec4899', text: '#ffffff' }, { id: 's6', label: 'ล/ส', bg: '#06b6d4', text: '#ffffff' }
             ],
+            drinkCategories: ['ดื่มบนฟลอร์', 'ดื่มออนไลน์', 'ดื่มหน้าบาร์', 'ดื่มร้านอาหาร', 'เลขโต๊ะ', 'อื่นๆ'],
+            shortcuts: ['แต่งหน้าทำผม', 'ลากิจ'],
             employees: [
-                // เพิ่มฟิลด์ workStart และ workEnd เพื่อกำหนดระยะเวลาทำงาน (ถ้าว่างคือทำตลอด)
-                { id: 'e1', no: '601', name: 'สมชาย รักดี', clubId: 'c1', tagId: 't1', workStart: '', workEnd: '' },
-                { id: 'e2', no: '641', name: 'โดม', clubId: 'c2', tagId: 't2', workStart: '', workEnd: '' },
-                { id: 'e3', no: '647', name: 'แม็ค', clubId: 'c1', tagId: 't3', workStart: '2023-01-01', workEnd: '2025-12-31' }
+                { id: 'e1', no: '601', name: 'สมชาย', fullName: 'สมชาย รักดี', bankAccount: '', clubId: 'c1', tagId: 't1', contractDays: 0, workStart: '', workEnd: '', lateLimit: 3 },
+                { id: 'e2', no: '641', name: 'โดม', fullName: '', bankAccount: '', clubId: 'c2', tagId: 't3', contractDays: 10, workStart: '', workEnd: '', lateLimit: 3 },
+                { id: 'e3', no: '647', name: 'แม็ค', fullName: '', bankAccount: '', clubId: 'c1', tagId: 't2', contractDays: 0, workStart: '', workEnd: '', lateLimit: 3 }
             ],
-            attendance: {} 
-            // โครงสร้างบันทึกเวลา: { "2023-10-25": { "empId": { "00:00": { statusId: "s1", custom: "", by: "Supervisor A" }, remarks: "สาย" } } }
+            attendance: {}, // { date: { empId: { time: { stId, rm, by } } } }
+            drinks: {}, // { date: { empId: { time: { amount, category, detail, by } } } }
+            finance: [], // { id, date, empId, amount, type('advance'|-1, 'pay'|+1), reason, by }
+            badDebts: [], // { empName, empNo, amount, dateDeleted }
+            deletedEmployees: [] // { empNo, empName, deleteDate, by }
         };
 
-        // ตัวแปรสถานะระบบ
         let db = {};
-        let currentUser = null; // null = พนักงาน (ดูได้อย่างเดียว), Object = หัวหน้า/Admin
-        let activeClubId = 'c1';
-        let currentDate = new Date().toISOString().split('T')[0]; // วันที่ปัจจุบันรูปแบบ YYYY-MM-DD
+        let currentUser = null; 
+        let currentClub = 'c1';
+        let selDate = '';
+        let pin = '';
         let currentPage = 'attendance';
-        
-        let targetEmpId = null;
-        let targetTime = null;
+        let selFinEmpId = null; // สำหรับหน้าการเงิน
 
-        // ฟังก์ชันโหลดข้อมูลจาก LocalStorage
-        function initDB() {
-            const saved = localStorage.getItem('companyAttendanceDB_V2');
-            if (saved) {
-                db = JSON.parse(saved);
-                // เช็คกรณีข้อมูลเก่าไม่มี tags หรือ statuses
-                if(!db.tags) db.tags = defaultData.tags;
-                if(!db.statuses) db.statuses = defaultData.statuses;
-            } else {
-                db = JSON.parse(JSON.stringify(defaultData));
-                saveDB();
+        // --- Init ---
+        function init() {
+            const saved = localStorage.getItem('friendlyDB_V6');
+            db = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(defaultData));
+            setToday(); setInterval(updateClock, 1000); updateClock(); checkAutoAbsent();
+        }
+        function saveDB() { localStorage.setItem('friendlyDB_V6', JSON.stringify(db)); }
+
+        // --- Time & Lock Logic ---
+        const thaiDays = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
+        const thaiMonths = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+        function updateClock() {
+            const d = new Date(); document.getElementById('realtimeDate').innerText = `วัน ${thaiDays[d.getDay()]} ที่ ${d.getDate()} ${thaiMonths[d.getMonth()]} ${d.getFullYear() + 543} - ${d.toLocaleTimeString('th-TH')}`;
+        }
+        function setToday() { selDate = new Date().toISOString().split('T')[0]; document.getElementById('globalDatePicker').value = selDate; checkAutoAbsent(); renderCurrentPage(); }
+        function changeGlobalDate() { selDate = document.getElementById('globalDatePicker').value; checkAutoAbsent(); renderCurrentPage(); }
+
+        // กฎการล็อคเวลา: ถ้าเป็นของวันก่อนหน้า และเลย 12.00 น. ของวันนี้ไปแล้ว หัวหน้างานแก้ไม่ได้
+        function isTimeLocked() {
+            if(!currentUser || currentUser.role === 'admin') return false;
+            const todayStr = new Date().toISOString().split('T')[0];
+            if(selDate < todayStr) {
+                const now = new Date();
+                if(now.getHours() >= 12) return true;
+            }
+            return false;
+        }
+
+        function checkAutoAbsent() {
+            const todayStr = new Date().toISOString().split('T')[0];
+            if(selDate !== todayStr) return;
+            const cutoff = db.settings.autoAbsentTime; if(!cutoff) return;
+            const now = new Date(); const [cHour, cMin] = cutoff.split(':'); const cutoffDate = new Date(); cutoffDate.setHours(parseInt(cHour), parseInt(cMin), 0, 0);
+            if(now > cutoffDate) {
+                if(!db.attendance[selDate]) db.attendance[selDate] = {};
+                const stX = db.statuses.find(s=>s.label==='X')?.id; if(!stX) return;
+                db.employees.forEach(emp => {
+                    if(db.tags.find(t=>t.id===emp.tagId)?.label === 'จบงาน') return;
+                    if(!db.attendance[selDate][emp.id]) db.attendance[selDate][emp.id] = {};
+                    const empAtt = db.attendance[selDate][emp.id];
+                    const club = db.clubs.find(c=>c.id===emp.clubId);
+                    let hasChecked = false; club.times.forEach(t => { if(empAtt[t] && empAtt[t].stId) hasChecked = true; });
+                    if(!hasChecked) club.times.forEach(t => { if(!empAtt[t]) empAtt[t] = { stId: stX, rm: 'ขาดอัตโนมัติ', by: 'System' }; });
+                }); saveDB();
             }
         }
 
-        // ฟังก์ชันบันทึกข้อมูล
-        function saveDB() {
-            localStorage.setItem('companyAttendanceDB_V2', JSON.stringify(db));
+        // --- Login & Navigation ---
+        function toggleMobileMenu() { document.getElementById('mobileMenu').classList.toggle('hidden'); }
+        function handleAuthClick() { if(currentUser) { currentUser=null; updateAuthUI(); goPage('attendance'); } else { pin=''; document.getElementById('loginError').classList.add('hidden'); document.getElementById('empLoginError').classList.add('hidden'); document.getElementById('empLoginId').value=''; updatePinDots(); openModal('loginModal'); switchLoginTab('sup'); } }
+        function switchLoginTab(type) {
+            const sA = document.getElementById('supLoginArea'), eA = document.getElementById('empLoginArea'), tS = document.getElementById('tabSupLogin'), tE = document.getElementById('tabEmpLogin');
+            if(type==='sup') { sA.classList.remove('hidden'); eA.classList.add('hidden'); tS.className="flex-1 py-2 text-indigo-600 border-b-2 border-indigo-600 bg-slate-50"; tE.className="flex-1 py-2 text-slate-400 border-b-2 border-transparent hover:bg-slate-50"; } 
+            else { sA.classList.add('hidden'); eA.classList.remove('hidden'); tE.className="flex-1 py-2 text-indigo-600 border-b-2 border-indigo-600 bg-slate-50"; tS.className="flex-1 py-2 text-slate-400 border-b-2 border-transparent hover:bg-slate-50"; setTimeout(() => document.getElementById('empLoginId').focus(), 100); }
         }
-
-        // ----------------- ระบบวันที่ และ การสลับหน้า -----------------
-        function setToday() {
-            currentDate = new Date().toISOString().split('T')[0];
-            document.getElementById('datePicker').value = currentDate;
-            renderAllActivePages();
-        }
-
-        function changeDate() {
-            const pickerVal = document.getElementById('datePicker').value;
-            if(pickerVal) {
-                currentDate = pickerVal;
-                renderAllActivePages();
-            }
-        }
-
-        function switchPage(pageId) {
-            currentPage = pageId;
-            // ซ่อนทุกหน้า แล้วแสดงหน้าที่เลือก
-            document.querySelectorAll('.page-section').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`page-${pageId}`).classList.remove('hidden');
-            
-            // ปรับสีเมนู Navbar
-            ['attendance', 'employees', 'dashboard', 'settings', 'sync'].forEach(id => {
-                const btn = document.getElementById(`nav-${id}`);
-                if(btn) {
-                    if(id === pageId) {
-                        btn.classList.add('bg-indigo-50', 'text-indigo-700');
-                        btn.classList.remove('text-slate-600');
-                    } else {
-                        btn.classList.remove('bg-indigo-50', 'text-indigo-700');
-                        btn.classList.add('text-slate-600');
-                    }
-                }
-            });
-
-            renderAllActivePages();
-        }
-
-        function renderAllActivePages() {
-            if(currentPage === 'attendance') {
-                renderClubTabs();
-                renderAttendanceTable();
-            } else if (currentPage === 'employees') {
-                renderEmployeeManageTable();
-            } else if (currentPage === 'settings') {
-                renderSettingsPage();
-            } else if (currentPage === 'dashboard') {
-                renderDashboard();
-            }
-        }
-
-        // ----------------- ระบบเข้าสู่ระบบ (Authentication) -----------------
-        function toggleAuth() {
-            if (currentUser) {
-                // หากเข้าระบบอยู่ ให้ทำการออกจากระบบ
-                currentUser = null;
-                updateAuthUI();
-                switchPage('attendance'); // บังคับกลับไปหน้าแรก
-            } else {
-                // เปิดกล่อง Login
-                document.getElementById('loginPin').value = '';
-                document.getElementById('loginError').classList.add('hidden');
-                openModal('loginModal');
-                setTimeout(() => document.getElementById('loginPin').focus(), 100);
-            }
-        }
-
-        function handleLogin() {
-            const pin = document.getElementById('loginPin').value.trim();
-            const user = db.users.find(u => u.id === pin);
-            
-            if (user) {
-                currentUser = user;
-                closeModals();
-                updateAuthUI();
-                renderAllActivePages(); 
-            } else {
-                document.getElementById('loginError').classList.remove('hidden');
-            }
-        }
-
-        function updateAuthUI() {
-            const authBtn = document.getElementById('authBtn');
-            const navMenu = document.getElementById('navMenu');
-            const userDisplay = document.getElementById('currentUserDisplay');
-            
-            // ปุ่มต่างๆ ที่ขึ้นอยู่กับสิทธิ์
-            const navDash = document.getElementById('nav-dashboard');
-            const navSet = document.getElementById('nav-settings');
-            const navSync = document.getElementById('nav-sync');
-            const btnAddEmp = document.getElementById('btnAddEmp');
-            const empManageActionHeader = document.getElementById('empManageActionHeader');
-
-            if (currentUser) {
-                // สิทธิ์หัวหน้างาน หรือ Admin
-                authBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> <span>Logout</span>';
-                authBtn.classList.replace('bg-indigo-600', 'bg-slate-200');
-                authBtn.classList.replace('text-white', 'text-slate-700');
-                authBtn.classList.replace('hover:bg-indigo-700', 'hover:bg-slate-300');
-                
-                navMenu.classList.remove('hidden');
-                userDisplay.classList.remove('hidden');
-                userDisplay.innerHTML = `<i class="fas fa-user-circle"></i> ${currentUser.name} <br><span class="text-[10px] font-normal leading-none">${currentUser.role === 'admin' ? 'Administrator' : 'หัวหน้างาน'}</span>`;
-                
-                // หัวหน้างาน & Admin ดู Dashboard ได้
-                navDash.classList.remove('hidden');
-                btnAddEmp.classList.remove('hidden');
-                empManageActionHeader.classList.remove('hidden');
-
-                // Admin สิทธิ์สูงสุดเข้าถึงตั้งค่าและซิงค์ได้
-                if(currentUser.role === 'admin') {
-                    navSet.classList.remove('hidden');
-                    navSync.classList.remove('hidden');
-                } else {
-                    navSet.classList.add('hidden');
-                    navSync.classList.add('hidden');
-                }
-            } else {
-                // พนักงานทั่วไป ดูได้อย่างเดียว
-                authBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> <span>Login (Admin/หัวหน้า)</span>';
-                authBtn.classList.replace('bg-slate-200', 'bg-indigo-600');
-                authBtn.classList.replace('text-slate-700', 'text-white');
-                authBtn.classList.replace('hover:bg-slate-300', 'hover:bg-indigo-700');
-                
-                userDisplay.classList.add('hidden');
-                
-                navDash.classList.add('hidden');
-                navSet.classList.add('hidden');
-                navSync.classList.add('hidden');
-                btnAddEmp.classList.add('hidden');
-                empManageActionHeader.classList.add('hidden');
-            }
-        }
-
-        // ----------------- ตัวสร้างองค์ประกอบกราฟิก (Badge / Tag) -----------------
-        function createBadgeHTML(label, bgColor, textColor, extraClass = '') {
-            if(!label) return '';
-            // เพิ่มกรอบจางๆ ให้ดูมีมิติ
-            return `<span class="custom-badge ${extraClass}" style="background-color: ${bgColor}; color: ${textColor}; border-color: rgba(0,0,0,0.1);">${label}</span>`;
-        }
-
-        function getTagHTML(tagId) {
-            const tag = db.tags.find(t => t.id === tagId);
-            return tag ? createBadgeHTML(tag.label, tag.bg, tag.text) : '';
-        }
-
-        function getStatusHTML(record) {
-            if(!record) return '';
-            
-            // กรณีเป็นแบบกรอกข้อความเอง จะใช้สีเทาเป็นค่าเริ่มต้น (ตามที่โจทย์ขอ)
-            if(!record.statusId && record.custom) {
-                return `<span class="custom-badge bg-gray-200 text-gray-700 border-gray-300" title="อัปเดตโดย: ${record.by}">${record.custom}</span>`;
-            }
-
-            // กรณีเป็นสถานะที่สร้างไว้ในระบบ
-            const status = db.statuses.find(s => s.id === record.statusId);
-            if(status) {
-                return `<span class="custom-badge" style="background-color: ${status.bg}; color: ${status.text}; border-color: rgba(0,0,0,0.1);" title="อัปเดตโดย: ${record.by}">${status.label}</span>`;
-            }
-            return '';
-        }
-
-        // ----------------- 1. เรนเดอร์หน้าเช็คชื่อ (Attendance) -----------------
-        function renderClubTabs() {
-            const container = document.getElementById('clubTabsContainer');
-            container.innerHTML = '';
-            
-            db.clubs.forEach(club => {
-                const isActive = club.id === activeClubId;
-                const btn = document.createElement('button');
-                btn.className = `px-5 py-2.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap shadow-sm border ${
-                    isActive 
-                    ? 'bg-indigo-600 text-white border-indigo-700 transform scale-105 z-10' 
-                    : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'
-                }`;
-                btn.textContent = club.name;
-                btn.onclick = () => {
-                    activeClubId = club.id;
-                    renderClubTabs();
-                    renderAttendanceTable();
-                };
-                container.appendChild(btn);
-            });
-        }
-
-        function renderAttendanceTable() {
-            const header = document.getElementById('tableHeader');
-            const body = document.getElementById('tableBody');
-            const emptyState = document.getElementById('emptyState');
-            const club = db.clubs.find(c => c.id === activeClubId);
-            
-            if(!club) return;
-            const times = club.times || [];
-            
-            // --- สร้างหัวตาราง (แยกคอลัมน์ No, Tag, ชื่อ) ---
-            let headerHTML = `<tr>
-                <th class="px-3 py-3 w-16 text-center border-b border-r border-slate-200 bg-slate-50 sticky left-0 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">No.</th>
-                <th class="px-2 py-3 w-14 text-center border-b border-r border-slate-200 bg-slate-50">Tag</th>
-                <th class="px-4 py-3 border-b border-r border-slate-200 bg-slate-50 min-w-[150px]">รายชื่อพนักงาน</th>`;
-            
-            times.forEach((t, index) => {
-                // อนุญาตให้แก้ไขเวลาได้ถ้า Login แล้ว
-                const editClass = currentUser ? 'time-header-editable text-indigo-700' : '';
-                const clickAction = currentUser ? `onclick="editTimeHeader('${club.id}', ${index}, '${t}')"` : '';
-                
-                headerHTML += `<th class="px-2 py-3 text-center border-b border-r border-slate-200 min-w-[60px]" title="${currentUser ? 'คลิกเพื่อแก้ไขเวลา' : ''}">
-                    <span class="${editClass}" ${clickAction}>${t}</span>
-                </th>`;
-            });
-            headerHTML += `<th class="px-4 py-3 border-b border-slate-200 min-w-[120px]">หมายเหตุ</th>
-            </tr>`;
-            header.innerHTML = headerHTML;
-
-            // --- ดึงและกรองพนักงาน ---
-            let emps = db.employees.filter(e => e.clubId === activeClubId);
-            
-            // กรองเฉพาะพนักงานที่ทำงานในวันที่เลือก (ตามระยะเวลาที่กำหนด)
-            const dCurrent = new Date(currentDate);
-            emps = emps.filter(emp => {
-                if(!emp.workStart && !emp.workEnd) return true; // ทำงานตลอด
-                const dStart = emp.workStart ? new Date(emp.workStart) : new Date('2000-01-01');
-                const dEnd = emp.workEnd ? new Date(emp.workEnd) : new Date('2100-01-01');
-                return dCurrent >= dStart && dCurrent <= dEnd;
-            });
-
-            // เรียงตาม No.
-            emps.sort((a, b) => parseInt(a.no || 0) - parseInt(b.no || 0));
-
-            // --- วาดแถวข้อมูล ---
-            body.innerHTML = '';
-            if (emps.length === 0) {
-                header.parentElement.classList.add('hidden');
-                emptyState.classList.remove('hidden');
-            } else {
-                header.parentElement.classList.remove('hidden');
-                emptyState.classList.add('hidden');
-                
-                const dateData = db.attendance[currentDate] || {};
-
-                emps.forEach(emp => {
-                    const row = document.createElement('tr');
-                    row.className = "hover:bg-slate-50 transition-colors group";
-                    const empRecord = dateData[emp.id] || {};
-                    
-                    // ส่วน Tag (สามารถจิ้มเพื่อแก้ไขได้ถ้า Login)
-                    const tagDisplay = getTagHTML(emp.tagId);
-                    const tagAction = currentUser ? `onclick="openTagSelection('${emp.id}')"` : '';
-                    const tagClass = currentUser ? 'cursor-pointer hover:scale-105 transition-transform' : '';
-                    const tagPlaceholder = currentUser ? '<span class="text-[10px] text-slate-400 border border-dashed rounded px-1 hover:text-indigo-600 hover:border-indigo-600">+Tag</span>' : '-';
-
-                    let rowHTML = `
-                        <td class="px-3 py-2 text-center border-r border-slate-100 font-bold text-slate-600 bg-white group-hover:bg-slate-50 sticky left-0 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">${emp.no}</td>
-                        <td class="px-2 py-2 border-r border-slate-100 text-center">
-                            <div class="inline-block ${tagClass}" ${tagAction}>
-                                ${tagDisplay || tagPlaceholder}
-                            </div>
-                        </td>
-                        <td class="px-4 py-2 border-r border-slate-100 font-medium truncate">${emp.name}</td>
-                    `;
-
-                    // ส่วนเวลาเช็คชื่อ
-                    times.forEach(t => {
-                        const record = empRecord[t];
-                        const cellContent = getStatusHTML(record);
-                        
-                        // ถ้ายืนยันตัวตนแล้ว ให้จิ้มเซลล์เพื่อแก้สถานะได้
-                        const interactiveClass = currentUser ? 'cell-interactive' : '';
-                        const clickAttr = currentUser ? `onclick="openStatusSelection('${emp.id}', '${t}')"` : '';
-                        const bgClass = record ? 'bg-slate-50' : ''; // ไฮไลต์อ่อนๆ ถ้ามีข้อมูล
-
-                        rowHTML += `<td class="px-1 py-1 text-center border-r border-slate-100 ${bgClass}">
-                            <div class="w-full h-full min-h-[36px] flex items-center justify-center rounded ${interactiveClass}" ${clickAttr}>
-                                ${cellContent}
-                            </div>
-                        </td>`;
-                    });
-
-                    // ส่วนหมายเหตุ
-                    const remarks = empRecord.remarks || '';
-                    const remarkInteractive = currentUser ? 'cell-interactive italic text-slate-500 hover:text-indigo-600' : 'text-slate-600';
-                    const remarkClick = currentUser ? `onclick="editRemarks('${emp.id}')"` : '';
-                    
-                    rowHTML += `<td class="px-4 py-2 border-slate-100 text-sm truncate max-w-[120px] ${remarkInteractive}" ${remarkClick}>
-                        ${remarks || (currentUser ? '<span class="text-slate-300 font-normal text-xs"><i class="fas fa-edit mr-1"></i>เพิ่มหมายเหตุ</span>' : '-')}
-                    </td>`;
-
-                    row.innerHTML = rowHTML;
-                    body.appendChild(row);
-                });
-            }
-        }
-
-        // --- ระบบบันทึกเวลา และ Tag ---
-        function openStatusSelection(empId, timeStr) {
-            targetEmpId = empId;
-            targetTime = timeStr;
-            
-            const empName = db.employees.find(e => e.id === empId)?.name;
-            document.getElementById('statusModalTitle').innerText = `บันทึกเวลา ${timeStr} - ${empName}`;
-            
-            let currentRecord = null;
-            if(db.attendance[currentDate] && db.attendance[currentDate][empId] && db.attendance[currentDate][empId][timeStr]) {
-                currentRecord = db.attendance[currentDate][empId][timeStr];
-            }
-
-            document.getElementById('customStatusInput').value = (currentRecord && !currentRecord.statusId) ? currentRecord.custom : '';
-            document.getElementById('statusCheckedBy').innerText = currentRecord ? `อัปเดตโดย: ${currentRecord.by}` : '';
-
-            const container = document.getElementById('statusButtonsContainer');
-            container.innerHTML = '';
-            
-            db.statuses.forEach(st => {
-                const isSelected = currentRecord && currentRecord.statusId === st.id;
-                const outline = isSelected ? 'ring-2 ring-offset-2 ring-indigo-500 scale-110' : '';
-                
-                const btn = document.createElement('button');
-                btn.className = `custom-badge px-4 py-2 cursor-pointer hover:opacity-80 transition-all ${outline}`;
-                btn.style.backgroundColor = st.bg;
-                btn.style.color = st.text;
-                btn.innerText = st.label;
-                btn.onclick = () => saveStatus(st.id, '');
-                container.appendChild(btn);
-            });
-
-            openModal('statusModal');
-        }
-
-        function saveStatus(statusId, customText) {
-            if(!db.attendance[currentDate]) db.attendance[currentDate] = {};
-            if(!db.attendance[currentDate][targetEmpId]) db.attendance[currentDate][targetEmpId] = {};
-            
-            db.attendance[currentDate][targetEmpId][targetTime] = {
-                statusId: statusId,
-                custom: customText,
-                by: currentUser.name // บันทึกชื่อหัวหน้า/Admin ที่ทำการเช็ค
-            };
-            
-            saveDB();
-            closeModals();
-            renderAttendanceTable();
-        }
-
-        function saveCustomStatus() {
-            const text = document.getElementById('customStatusInput').value.trim();
-            if(text) saveStatus(null, text); // statusId = null เพื่อให้รู้ว่าเป็น custom (สีเทา)
-        }
-
-        function clearStatus() {
-            if(db.attendance[currentDate] && db.attendance[currentDate][targetEmpId] && db.attendance[currentDate][targetEmpId][targetTime]) {
-                delete db.attendance[currentDate][targetEmpId][targetTime];
-                saveDB();
-                closeModals();
-                renderAttendanceTable();
-            }
-        }
-
-        function openTagSelection(empId) {
-            targetEmpId = empId;
-            const empName = db.employees.find(e => e.id === empId)?.name;
-            document.getElementById('tagSelectTitle').innerText = `กำหนด Tag: ${empName}`;
-            
-            const container = document.getElementById('tagSelectButtonsContainer');
-            container.innerHTML = '';
-            
-            db.tags.forEach(t => {
-                const btn = document.createElement('button');
-                btn.className = `custom-badge px-4 py-2 cursor-pointer hover:scale-105 transition-transform`;
-                btn.style.backgroundColor = t.bg;
-                btn.style.color = t.text;
-                btn.innerText = t.label;
-                btn.onclick = () => {
-                    const idx = db.employees.findIndex(e => e.id === empId);
-                    db.employees[idx].tagId = t.id;
-                    saveDB();
-                    closeModals();
-                    renderAttendanceTable();
-                };
-                container.appendChild(btn);
-            });
-
-            openModal('tagSelectModal');
-        }
-
-        function clearTag() {
-            const idx = db.employees.findIndex(e => e.id === targetEmpId);
-            db.employees[idx].tagId = '';
-            saveDB();
-            closeModals();
-            renderAttendanceTable();
-        }
-
-        function editRemarks(empId) {
-            let current = '';
-            if(db.attendance[currentDate] && db.attendance[currentDate][empId]) {
-                current = db.attendance[currentDate][empId].remarks || '';
-            }
-            
-            const empName = db.employees.find(e => e.id === empId)?.name;
-            const text = prompt(`พิมพ์หมายเหตุสำหรับ: ${empName}`, current);
-            
-            if (text !== null) {
-                if(!db.attendance[currentDate]) db.attendance[currentDate] = {};
-                if(!db.attendance[currentDate][empId]) db.attendance[currentDate][empId] = {};
-                
-                db.attendance[currentDate][empId].remarks = text.trim();
-                saveDB();
-                renderAttendanceTable();
-            }
-        }
-
-        function editTimeHeader(clubId, timeIndex, oldTime) {
-            const newTime = prompt(`กำหนดเวลาเช็คชื่อใหม่ จากเดิม "${oldTime}"\nเช่น 08:30 หรือ 22:15`, oldTime);
-            if (newTime && newTime.trim() !== '') {
-                const club = db.clubs.find(c => c.id === clubId);
-                if (club) {
-                    club.times[timeIndex] = newTime.trim();
-                    saveDB();
-                    renderAttendanceTable();
-                }
-            }
-        }
-
-        // ----------------- 2. จัดการรายชื่อพนักงาน (Employee Management) -----------------
-        function renderEmployeeManageTable() {
-            const tbody = document.getElementById('empManageTableBody');
-            const search = document.getElementById('searchEmpInput').value.toLowerCase();
-            tbody.innerHTML = '';
-
-            let hasResult = false;
-
-            // จัดกลุ่มการแสดงผลแยกตามร้าน (คลับ)
-            db.clubs.forEach(club => {
-                let emps = db.employees.filter(e => e.clubId === club.id);
-                // กรองด้วยคำค้นหา
-                if(search) {
-                    emps = emps.filter(e => e.name.toLowerCase().includes(search) || e.no.includes(search));
-                }
-                
-                if(emps.length > 0) {
-                    hasResult = true;
-                    // สร้างแถว Header ของร้านนั้นๆ
-                    tbody.innerHTML += `
-                        <tr class="bg-indigo-50/50 border-y border-indigo-100">
-                            <td colspan="5" class="px-6 py-2 font-bold text-indigo-800"><i class="fas fa-store mr-2 text-indigo-400"></i>${club.name}</td>
-                        </tr>
-                    `;
-
-                    emps.sort((a, b) => parseInt(a.no||0) - parseInt(b.no||0));
-
-                    emps.forEach(emp => {
-                        // แสดงวันที่
-                        let dateStr = 'ทำตลอด';
-                        if(emp.workStart || emp.workEnd) {
-                            dateStr = `${emp.workStart ? emp.workStart : 'ตลอด'} ถึง ${emp.workEnd ? emp.workEnd : 'ตลอด'}`;
-                        }
-
-                        // ปุ่มจัดการจะแสดงเมื่อมีสิทธิ์ (currentUser ไม่ใช่ null)
-                        const actionHTML = currentUser ? `
-                            <button onclick="editEmp('${emp.id}')" class="text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded p-1.5 mx-1 transition-colors"><i class="fas fa-edit"></i></button>
-                            ${currentUser.role === 'admin' ? `<button onclick="deleteEmp('${emp.id}')" class="text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 rounded p-1.5 transition-colors"><i class="fas fa-trash-alt"></i></button>` : ''}
-                        ` : '-';
-
-                        tbody.innerHTML += `
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-3 font-semibold text-slate-700 border-l-[3px] border-transparent hover:border-indigo-400">${emp.no}</td>
-                                <td class="px-6 py-3">${getTagHTML(emp.tagId) || '-'}</td>
-                                <td class="px-6 py-3 text-slate-900">${emp.name}</td>
-                                <td class="px-6 py-3 text-xs text-slate-500">${dateStr}</td>
-                                <td class="px-6 py-3 text-right whitespace-nowrap ${currentUser ? '' : 'hidden'} action-col">${actionHTML}</td>
-                            </tr>
-                        `;
-                    });
-                }
-            });
-
-            if(!hasResult) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-400">ไม่พบรายชื่อพนักงาน</td></tr>`;
-            }
-        }
-
-        function openEmpModal() {
-            document.getElementById('empFormId').value = '';
-            document.getElementById('empFormNo').value = '';
-            document.getElementById('empFormName').value = '';
-            document.getElementById('empFormStart').value = '';
-            document.getElementById('empFormEnd').value = '';
-            
-            const clubSelect = document.getElementById('empFormClub');
-            clubSelect.innerHTML = db.clubs.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-
-            document.getElementById('empModalTitle').innerText = 'เพิ่มพนักงานใหม่';
-            openModal('employeeModal');
-        }
-
-        function editEmp(id) {
-            const emp = db.employees.find(e => e.id === id);
-            if(!emp) return;
-            
-            const clubSelect = document.getElementById('empFormClub');
-            clubSelect.innerHTML = db.clubs.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            
-            document.getElementById('empFormId').value = emp.id;
-            document.getElementById('empFormNo').value = emp.no;
-            document.getElementById('empFormName').value = emp.name;
-            document.getElementById('empFormClub').value = emp.clubId;
-            document.getElementById('empFormStart').value = emp.workStart || '';
-            document.getElementById('empFormEnd').value = emp.workEnd || '';
-            
-            document.getElementById('empModalTitle').innerText = 'แก้ไขข้อมูลพนักงาน';
-            openModal('employeeModal');
-        }
-
-        function saveEmployee() {
-            const id = document.getElementById('empFormId').value;
-            const no = document.getElementById('empFormNo').value.trim();
-            const name = document.getElementById('empFormName').value.trim();
-            const clubId = document.getElementById('empFormClub').value;
-            const workStart = document.getElementById('empFormStart').value;
-            const workEnd = document.getElementById('empFormEnd').value;
-
-            if(!no || !name) { alert("กรุณากรอกรหัสและชื่อให้ครบถ้วน"); return; }
-
-            // หา tag เดิมถ้ามีการแก้ไข
-            let oldTag = '';
-            if(id) {
-                const oldEmp = db.employees.find(e => e.id === id);
-                if(oldEmp) oldTag = oldEmp.tagId;
-            }
-
-            const empData = { 
-                id: id || 'e'+Date.now(), 
-                no, name, clubId, tagId: oldTag, 
-                workStart, workEnd 
-            };
-
-            if(id) {
-                const idx = db.employees.findIndex(e => e.id === id);
-                db.employees[idx] = empData;
-            } else {
-                db.employees.push(empData);
-            }
-
-            saveDB();
-            closeModals();
-            renderEmployeeManageTable();
-        }
-
-        function deleteEmp(id) {
-            if(confirm("ยืนยันการลบพนักงาน?")) {
-                db.employees = db.employees.filter(e => e.id !== id);
-                saveDB();
-                renderEmployeeManageTable();
-            }
-        }
-
-        // ----------------- 3. หน้าแดชบอร์ดประวัติ (Dashboard) -----------------
-        function renderDashboard() {
-            document.getElementById('dashboardDateDisplay').innerText = currentDate;
-            const tbody = document.getElementById('dashboardTableBody');
-            const emptyBlock = document.getElementById('emptyDashboard');
-            tbody.innerHTML = '';
-            
-            let logs = [];
-            const dateData = db.attendance[currentDate] || {};
-            
-            // รวบรวมข้อมูลการเช็คชื่อทั้งหมดในวันนี้
-            Object.keys(dateData).forEach(empId => {
-                const empInfo = db.employees.find(e => e.id === empId);
-                const empName = empInfo ? empInfo.name : 'ไม่ทราบชื่อ';
-                const clubInfo = empInfo ? db.clubs.find(c => c.id === empInfo.clubId)?.name : '';
-                
-                const timesObj = dateData[empId];
-                Object.keys(timesObj).forEach(timeStr => {
-                    if(timeStr === 'remarks') return; // ข้ามช่องหมายเหตุ
-                    
-                    const record = timesObj[timeStr];
-                    logs.push({
-                        time: timeStr,
-                        empName: empName,
-                        club: clubInfo,
-                        statusObj: record,
-                        by: record.by
-                    });
-                });
-            });
-
-            // กรองข้อมูล: หัวหน้างานจะเห็นแค่ของตัวเอง, Admin เห็นทั้งหมด
-            if (currentUser && currentUser.role === 'supervisor') {
-                logs = logs.filter(l => l.by === currentUser.name);
-                document.getElementById('dashboardSubtitle').innerText = `ประวัติการเช็คชื่อที่คุณบันทึกในวันนี้`;
-            } else {
-                document.getElementById('dashboardSubtitle').innerText = `ประวัติการเช็คชื่อจากทุกหัวหน้างาน`;
-            }
-
-            // เรียงตามเวลา (คร่าวๆ)
-            logs.sort((a, b) => a.time.localeCompare(b.time));
-
-            if (logs.length === 0) {
-                tbody.parentElement.classList.add('hidden');
-                emptyBlock.classList.remove('hidden');
-            } else {
-                tbody.parentElement.classList.remove('hidden');
-                emptyBlock.classList.add('hidden');
-
-                logs.forEach(l => {
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-slate-50">
-                            <td class="px-6 py-3 font-semibold text-slate-700">${l.time}</td>
-                            <td class="px-6 py-3">
-                                <span class="block text-slate-900">${l.empName}</span>
-                                <span class="text-[10px] text-slate-400">${l.club}</span>
-                            </td>
-                            <td class="px-6 py-3">${getStatusHTML(l.statusObj)}</td>
-                            <td class="px-6 py-3 text-xs text-slate-500"><i class="fas fa-user-edit mr-1"></i>${l.by}</td>
-                        </tr>
-                    `;
-                });
-            }
-        }
-
-        // ----------------- 4. ตั้งค่าระบบ (Settings) -----------------
-        function renderSettingsPage() {
-            renderClubSettings();
-            renderTagSettings();
-            renderStatusSettings();
-            renderSupervisors();
-        }
-
-        // --- ตั้งค่าร้าน/คลับ ---
-        function renderClubSettings() {
-            const container = document.getElementById('clubSettingsList');
-            container.innerHTML = '';
-            
-            db.clubs.forEach(c => {
-                const timesHtml = c.times.map((t, idx) => 
-                    `<span class="inline-flex items-center bg-white border border-slate-200 shadow-sm rounded px-2 py-1 text-xs m-1 text-slate-700 font-medium">
-                        ${t} <i class="fas fa-times text-red-400 cursor-pointer hover:text-red-600 ml-2" onclick="deleteTime('${c.id}', ${idx})"></i>
-                    </span>`
-                ).join('');
-
-                container.innerHTML += `
-                    <div class="border border-slate-200 rounded-lg p-3 bg-white shadow-sm mb-3">
-                        <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-50">
-                            <span class="font-bold text-indigo-700 text-sm"><i class="fas fa-store text-indigo-300 mr-2"></i>${c.name}</span>
-                            <button onclick="deleteClub('${c.id}')" class="text-[10px] text-red-500 hover:bg-red-50 px-2 py-1 rounded transition-colors"><i class="fas fa-trash"></i> ลบร้าน</button>
-                        </div>
-                        <div class="text-sm bg-slate-50 p-2 rounded">
-                            <div class="mb-2 flex flex-wrap items-center">
-                                <span class="text-slate-500 mr-2 text-xs font-semibold">เวลาเช็คชื่อ:</span>
-                                ${timesHtml || '<span class="text-slate-400 text-xs italic">ไม่มีเวลา</span>'}
-                            </div>
-                            <div class="flex gap-2 mt-2">
-                                <input type="text" id="newTime_${c.id}" placeholder="เพิ่มเวลา (เช่น 08:00)" class="border border-slate-300 rounded px-2 py-1 text-xs outline-none flex-grow bg-white">
-                                <button onclick="addTime('${c.id}')" class="bg-indigo-600 text-white px-3 py-1 rounded text-xs hover:bg-indigo-700">เพิ่ม</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        function addClub() {
-            const name = document.getElementById('newClubName').value.trim();
-            if(name) {
-                db.clubs.push({ id: 'c'+Date.now(), name, times: [] });
-                saveDB();
-                document.getElementById('newClubName').value = '';
-                renderClubSettings();
-            }
-        }
-        function deleteClub(id) {
-            if(confirm("ลบร้านนี้? พนักงานจะถูกลบไปด้วย")) {
-                db.clubs = db.clubs.filter(c => c.id !== id);
-                db.employees = db.employees.filter(e => e.clubId !== id);
-                saveDB();
-                renderClubSettings();
-            }
-        }
-        function addTime(clubId) {
-            const input = document.getElementById(`newTime_${clubId}`);
-            const timeStr = input.value.trim();
-            if(timeStr) {
-                const club = db.clubs.find(c => c.id === clubId);
-                if(!club.times.includes(timeStr)) {
-                    club.times.push(timeStr);
-                    club.times.sort();
-                    saveDB();
-                    renderClubSettings();
-                } else { alert('มีเวลานี้อยู่แล้ว'); }
-            }
-        }
-        function deleteTime(clubId, timeIdx) {
-            const club = db.clubs.find(c => c.id === clubId);
-            club.times.splice(timeIdx, 1);
-            saveDB();
-            renderClubSettings();
-        }
-
-        // --- ตั้งค่า Tags และ Statuses ---
-        function renderTagSettings() {
-            const container = document.getElementById('tagsSettingsList');
-            container.innerHTML = db.tags.map(t => 
-                `<div onclick="editConfigItem('tag', '${t.id}')" class="cursor-pointer hover:scale-105 transition-transform" title="คลิกเพื่อแก้ไขสี/ข้อความ">
-                    ${createBadgeHTML(t.label, t.bg, t.text)}
-                </div>`
-            ).join('');
-        }
-        function renderStatusSettings() {
-            const container = document.getElementById('statusSettingsList');
-            container.innerHTML = db.statuses.map(s => 
-                `<div onclick="editConfigItem('status', '${s.id}')" class="cursor-pointer hover:scale-105 transition-transform" title="คลิกเพื่อแก้ไขสี/ข้อความ">
-                    ${createBadgeHTML(s.label, s.bg, s.text)}
-                </div>`
-            ).join('');
-        }
-
-        document.getElementById('configBgColor').addEventListener('input', updateConfigPreview);
-        document.getElementById('configTextColor').addEventListener('input', updateConfigPreview);
-        document.getElementById('configLabel').addEventListener('input', updateConfigPreview);
-
-        function updateConfigPreview() {
-            const label = document.getElementById('configLabel').value || 'ตัวอย่าง';
-            const bg = document.getElementById('configBgColor').value;
-            const text = document.getElementById('configTextColor').value;
-            const preview = document.getElementById('configPreview');
-            preview.innerText = label;
-            preview.style.backgroundColor = bg;
-            preview.style.color = text;
-        }
-
-        function openConfigModal(type) {
-            document.getElementById('configType').value = type;
-            document.getElementById('configId').value = '';
-            document.getElementById('configLabel').value = '';
-            document.getElementById('configBgColor').value = type==='tag'?'#3b82f6':'#22c55e';
-            document.getElementById('configTextColor').value = '#ffffff';
-            document.getElementById('btnDeleteConfig').classList.add('hidden');
-            
-            document.getElementById('configModalTitle').innerText = type === 'tag' ? 'เพิ่มป้ายกำกับ (Tag)' : 'เพิ่มสถานะเช็คชื่อ';
-            updateConfigPreview();
-            openModal('configItemModal');
-        }
-
-        function editConfigItem(type, id) {
-            const list = type === 'tag' ? db.tags : db.statuses;
-            const item = list.find(i => i.id === id);
-            
-            document.getElementById('configType').value = type;
-            document.getElementById('configId').value = item.id;
-            document.getElementById('configLabel').value = item.label;
-            document.getElementById('configBgColor').value = item.bg;
-            document.getElementById('configTextColor').value = item.text;
-            document.getElementById('btnDeleteConfig').classList.remove('hidden');
-            
-            document.getElementById('configModalTitle').innerText = type === 'tag' ? 'แก้ไขป้ายกำกับ (Tag)' : 'แก้ไขสถานะเช็คชื่อ';
-            updateConfigPreview();
-            openModal('configItemModal');
-        }
-
-        function saveConfigItem() {
-            const type = document.getElementById('configType').value;
-            const id = document.getElementById('configId').value;
-            const label = document.getElementById('configLabel').value.trim();
-            const bg = document.getElementById('configBgColor').value;
-            const text = document.getElementById('configTextColor').value;
-            
-            if(!label) return;
-            const data = { id: id || (type.charAt(0) + Date.now()), label, bg, text };
-            const list = type === 'tag' ? db.tags : db.statuses;
-
-            if(id) {
-                const idx = list.findIndex(i => i.id === id);
-                list[idx] = data;
-            } else {
-                list.push(data);
-            }
-
-            saveDB();
-            closeModals();
-            if(type === 'tag') renderTagSettings();
-            else renderStatusSettings();
-        }
-
-        function deleteConfigItem() {
-            const type = document.getElementById('configType').value;
-            const id = document.getElementById('configId').value;
-            if(confirm("ยืนยันการลบข้อมูลนี้หรือไม่?")) {
-                if(type === 'tag') {
-                    db.tags = db.tags.filter(t => t.id !== id);
-                    renderTagSettings();
-                } else {
-                    db.statuses = db.statuses.filter(s => s.id !== id);
-                    renderStatusSettings();
-                }
-                saveDB();
-                closeModals();
-            }
-        }
-
-        // --- ตั้งค่าผู้ใช้งาน (หัวหน้างาน) ---
-        function renderSupervisors() {
-            const ul = document.getElementById('supervisorList');
-            ul.innerHTML = '';
-            
-            const sups = db.users.filter(u => u.role === 'supervisor');
-            if(sups.length === 0) ul.innerHTML = '<li class="py-4 text-center text-slate-400 text-xs italic">ยังไม่มีหัวหน้างานในระบบ</li>';
-            
-            sups.forEach(u => {
-                ul.innerHTML += `
-                    <li class="py-3 flex justify-between items-center group">
-                        <div class="flex items-center">
-                            <i class="fas fa-user-tie text-slate-400 mr-3"></i>
-                            <div>
-                                <div class="font-medium text-slate-700 leading-none">${u.name}</div>
-                                <div class="text-[10px] text-slate-400 mt-1">USER ID (PIN): <span class="font-mono bg-slate-100 px-1 rounded">${u.id}</span></div>
-                            </div>
-                        </div>
-                        <button onclick="deleteSupervisor('${u.id}')" class="text-red-400 hover:text-red-600 bg-red-50 p-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"><i class="fas fa-trash-alt"></i></button>
-                    </li>
-                `;
-            });
-        }
-
-        function addSupervisor() {
-            const name = document.getElementById('newSupName').value.trim();
-            const id = document.getElementById('newSupId').value.trim();
-            
-            if(!name || id.length !== 6 || isNaN(id)) {
-                alert("กรุณากรอกชื่อ และ รหัสผ่าน (USER ID) ให้ครบเป็นตัวเลข 6 หลัก");
-                return;
-            }
-            if(db.users.find(u => u.id === id)) {
-                alert("USER ID นี้มีผู้ใช้งานแล้ว โปรดตั้งเลขอื่น");
-                return;
-            }
-            
-            db.users.push({ id, name, role: 'supervisor' });
-            saveDB();
-            document.getElementById('newSupName').value = '';
-            document.getElementById('newSupId').value = '';
-            renderSupervisors();
-        }
-
-        function deleteSupervisor(id) {
-            if(confirm("ลบหัวหน้างานคนนี้ออกระบบ? (ประวัติการเช็คชื่อที่ผ่านมายังคงอยู่)")) {
-                db.users = db.users.filter(u => u.id !== id);
-                saveDB();
-                renderSupervisors();
-            }
-        }
-
-        // ----------------- 5. นำเข้า/ส่งออก ข้อมูลกับ Google Sheets (CSV) -----------------
-        
-        // ฟังก์ชันแปลงข้อความเป็น CSV ป้องกันปัญหาคอมม่าในชื่อ
-        function escapeCSV(str) {
-            if(str == null) return '';
-            const s = String(str);
-            if(s.includes(',') || s.includes('"') || s.includes('\n')) {
-                return `"${s.replace(/"/g, '""')}"`;
-            }
-            return s;
-        }
-
-        function exportCSV() {
-            // สร้าง Header ของ CSV
-            let csvContent = "Date,Club,No,Tag,Name,Time,Status,CustomStatus,CheckedBy,Remarks\n";
-
-            // วนลูปอ่านข้อมูลการเช็คชื่อทั้งหมดมาสร้างเป็น CSV
-            Object.keys(db.attendance).forEach(date => {
-                const dateData = db.attendance[date];
-                Object.keys(dateData).forEach(empId => {
-                    const emp = db.employees.find(e => e.id === empId);
-                    if(!emp) return;
-                    
-                    const club = db.clubs.find(c => c.id === emp.clubId)?.name || '';
-                    const tag = db.tags.find(t => t.id === emp.tagId)?.label || '';
-                    const times = dateData[empId];
-                    
-                    Object.keys(times).forEach(timeStr => {
-                        if(timeStr === 'remarks') return; // ข้าม remarks ให้อยู่ท้ายสุด
-                        const record = times[timeStr];
-                        const statusLabel = db.statuses.find(s => s.id === record.statusId)?.label || '';
-                        
-                        // สร้างแถวข้อมูล
-                        csvContent += [
-                            escapeCSV(date),
-                            escapeCSV(club),
-                            escapeCSV(emp.no),
-                            escapeCSV(tag),
-                            escapeCSV(emp.name),
-                            escapeCSV(timeStr),
-                            escapeCSV(statusLabel),
-                            escapeCSV(record.custom || ''),
-                            escapeCSV(record.by || ''),
-                            escapeCSV(times.remarks || '')
-                        ].join(',') + "\n";
-                    });
-                });
-            });
-
-            // เพิ่ม BOM ป้องกันภาษาไทยเพี้ยนใน Excel/Google Sheets
-            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-            const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
-            
-            // สั่งดาวน์โหลดไฟล์
-            const link = document.createElement("a");
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", `attendance_export_${new Date().toISOString().split('T')[0]}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function importCSV(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const text = e.target.result;
-                // ในระบบจริง คุณจะต้องเขียน Logic อ่านค่าจาก CSV แล้วแปลงกลับมาใส่ db
-                // แต่เนื่องจากโครงสร้าง db ซับซ้อน (มีหลาย Table) การ import จากไฟล์เดียวอาจทับข้อมูล
-                alert("ระบบอ่านไฟล์ CSV สำเร็จ!\n(ในเวอร์ชั่นเต็มจะทำการอัปเดตข้อมูลพนักงานและประวัติการเช็คชื่อจากไฟล์นี้)");
-                console.log(text.substring(0, 200) + "..."); // แสดงตัวอย่างใน Console
-                event.target.value = ''; // รีเซ็ต input
-            };
-            reader.readAsText(file);
-        }
-
-        // ----------------- ควบคุม Modals ทั่วไป -----------------
-        function openModal(id) {
-            document.getElementById('modalOverlay').classList.remove('hidden');
-            document.querySelectorAll('.modal-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
-        }
-
-        function closeModals() {
-            document.getElementById('modalOverlay').classList.add('hidden');
-        }
-
-        // ----------------- เริ่มต้นทำงานเมื่อเปิดหน้าเว็บ (On Load) -----------------
-        window.onload = () => {
-            initDB();
-            document.getElementById('datePicker').value = currentDate;
-            updateAuthUI();
-            switchPage('attendance'); // เริ่มต้นที่หน้าเช็คชื่อ
+        function typePin(val) { if(val === 'C') pin = ''; else if(val === 'D') pin = pin.slice(0, -1); else if(pin.length < 6) pin += val; updatePinDots(); if(pin.length === 6) { const user = db.users.find(u => u.id === pin); if(user) { currentUser = user; closeModals(); updateAuthUI(); goPage('attendance'); } else { document.getElementById('loginError').classList.remove('hidden'); setTimeout(()=>{pin='';updatePinDots();}, 500); } } }
+        function updatePinDots() { document.querySelectorAll('.pin-dot').forEach((dot, idx) => { dot.className = idx < pin.length ? "w-3 h-3 rounded-full pin-dot bg-indigo-500 scale-125 transition-transform" : "w-3 h-3 rounded-full pin-dot bg-slate-200 transition-transform"; }); }
+        function verifyEmpLogin() { const id = document.getElementById('empLoginId').value.trim().toUpperCase(); const emp = db.employees.find(e => e.no.toUpperCase() === id); if(emp) { currentUser = { id: emp.id, name: emp.name, role: 'employee' }; closeModals(); updateAuthUI(); goPage('myprofile'); } else { document.getElementById('empLoginError').classList.remove('hidden'); } }
+
+        const pagesConfig = {
+            'attendance': { title: 'เช็คชื่อ', icon: 'fa-clipboard-user', reqLogin: false },
+            'drinks': { title: 'จดดื่ม', icon: 'fa-glass-cheers', reqLogin: true, perm: 'drink' },
+            'finance': { title: 'การเงิน', icon: 'fa-wallet', reqLogin: true, adminOnly: true },
+            'employees': { title: 'พนักงาน', icon: 'fa-users', reqLogin: true, perm: 'emp' },
+            'dashboard': { title: 'Dashboard', icon: 'fa-chart-pie', reqLogin: true, perm: 'dash' },
+            'history': { title: 'ประวัติลบ', icon: 'fa-history', reqLogin: true, adminOnly: true },
+            'settings': { title: 'ตั้งค่าระบบ', icon: 'fa-cog', reqLogin: true, adminOnly: true },
+            'myprofile': { title: 'ข้อมูลของฉัน', icon: 'fa-user', reqLogin: true, empOnly: true }
         };
+
+        function buildNav() {
+            const main = document.getElementById('mainNav'), mob = document.getElementById('mobileMenu'); main.innerHTML = ''; mob.innerHTML = '';
+            for(let key in pagesConfig) {
+                const p = pagesConfig[key];
+                if(p.reqLogin && !currentUser) continue;
+                if(p.adminOnly && (!currentUser || currentUser.role !== 'admin')) continue;
+                if(p.empOnly && (!currentUser || currentUser.role !== 'employee')) continue;
+                if(!p.empOnly && currentUser?.role === 'employee') continue;
+                if(p.perm && currentUser?.role === 'supervisor' && (!currentUser.permissions || !currentUser.permissions[p.perm])) continue;
+
+                const actMain = key === currentPage ? 'bg-indigo-700 text-white shadow-inner' : 'text-slate-300 hover:bg-slate-800 hover:text-white';
+                main.innerHTML += `<button onclick="goPage('${key}')" class="px-3 py-1.5 rounded-md text-sm font-medium transition-all ${actMain}"><i class="fas ${p.icon} mr-1"></i>${p.title}</button>`;
+                const actMob = key === currentPage ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-700';
+                mob.innerHTML += `<button onclick="goPage('${key}'); toggleMobileMenu()" class="block w-full text-left px-4 py-3 rounded-lg text-sm font-medium ${actMob}"><i class="fas ${p.icon} w-6 text-center"></i> ${p.title}</button>`;
+            }
+        }
+        function updateAuthUI() {
+            const btn = document.getElementById('authBtn'), info = document.getElementById('userInfoDisplay');
+            if(currentUser) {
+                btn.innerHTML = '<i class="fas fa-sign-out-alt"></i> <span>ออกจากระบบ</span>'; btn.className = "bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg";
+                info.classList.remove('hidden'); document.getElementById('userNameTxt').innerText = currentUser.name;
+                let rTxt = 'พนักงาน', pTxt = '';
+                if(currentUser.role === 'admin') rTxt = currentUser.isMainAdmin ? 'Admin หลัก' : 'Admin';
+                else if(currentUser.role === 'supervisor') { rTxt = 'หัวหน้างาน'; let p=[]; if(currentUser.permissions.att) p.push('เช็คชื่อ'); if(currentUser.permissions.drink) p.push('จดดื่ม'); if(currentUser.permissions.emp) p.push('พนักงาน'); if(currentUser.permissions.dash) p.push('สถิติ'); pTxt = `สิทธิ์: ${p.join(', ')}`; }
+                document.getElementById('userRoleTxt').innerText = rTxt; document.getElementById('userPermTxt').innerText = pTxt;
+            } else {
+                btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> <span>เข้าสู่ระบบ</span>'; btn.className = "bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg";
+                info.classList.add('hidden');
+            } buildNav();
+        }
+        function goPage(pageId) {
+            currentPage = pageId; document.getElementById('pageTitle').innerHTML = `<i class="fas ${pagesConfig[pageId].icon} text-indigo-500 mr-2"></i>${pagesConfig[pageId].title}`;
+            const dBar = document.getElementById('globalDateBar');
+            if(['settings','employees','finance','history'].includes(pageId)) dBar.classList.add('hidden'); else dBar.classList.remove('hidden');
+            document.querySelectorAll('.page-section').forEach(el => el.classList.add('hidden')); document.getElementById('page-' + pageId).classList.remove('hidden');
+            buildNav(); renderCurrentPage();
+        }
+        function renderCurrentPage() {
+            if(currentPage === 'attendance') { renderTabs('clubTabs'); renderAtt(); }
+            else if(currentPage === 'drinks') { renderTabs('drinkClubTabs'); renderDrinks(); }
+            else if(currentPage === 'myprofile') renderMyProfile();
+            else if(currentPage === 'employees') renderEmployees();
+            else if(currentPage === 'finance') renderFinanceList();
+            else if(currentPage === 'history') renderDeletedHistory();
+            else if(currentPage === 'dashboard') { initDash(); renderDashboard(); renderLeaderboard(); }
+            else if(currentPage === 'settings') renderSettings();
+        }
+        function getBadge(id, type) { const item = (type === 'tag' ? db.tags : db.statuses).find(x => x.id === id); return item ? `<span class="custom-badge" style="background:${item.bg}; color:${item.text}; border: 1px solid rgba(0,0,0,0.1);">${item.label}</span>` : ''; }
+
+        // --- 1. Attendance ---
+        function renderTabs(containerId) {
+            const box = document.getElementById(containerId); box.innerHTML = '';
+            db.clubs.forEach(c => {
+                if(currentUser && currentUser.role === 'supervisor' && !currentUser.clubs.includes('all') && !currentUser.clubs.includes(c.id)) return;
+                const act = c.id === currentClub;
+                box.innerHTML += `<button onclick="currentClub='${c.id}'; renderCurrentPage()" class="px-4 py-2 rounded-lg text-sm font-bold transition-all border ${act ? 'bg-indigo-600 text-white border-indigo-700 shadow-md' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'}">${c.name}</button>`;
+            });
+        }
+        function renderAtt() {
+            const head = document.getElementById('attHeader'), body = document.getElementById('attBody');
+            const club = db.clubs.find(c => c.id === currentClub); if(!club) return;
+            let h = `<tr><th class="px-3 py-3 w-12 text-center border-r bg-slate-50">No.</th><th class="px-2 py-3 w-16 text-center border-r bg-slate-50">Tag</th><th class="px-3 py-3 border-r bg-slate-50 min-w-[120px]">พนักงาน</th>`;
+            club.times.forEach(t => { h += `<th class="px-1 py-3 text-center border-r min-w-[50px]">${t}</th>`; });
+            h += `</tr>`; head.innerHTML = h;
+
+            let emps = db.employees.filter(e => e.clubId === currentClub && db.tags.find(t=>t.id===e.tagId)?.label !== 'จบงาน').sort((a,b) => parseInt(a.no||0) - parseInt(b.no||0));
+            body.innerHTML = '';
+            if(emps.length === 0) { body.innerHTML = `<tr><td colspan="${3+club.times.length}" class="text-center py-10 text-slate-400">ไม่มีพนักงานในร้านนี้</td></tr>`; return; }
+            
+            const tData = db.attendance[selDate] || {};
+            const canCheck = currentUser && (currentUser.role === 'admin' || (currentUser.role === 'supervisor' && currentUser.permissions.att));
+            const locked = isTimeLocked();
+
+            emps.forEach(emp => {
+                const r = document.createElement('tr'); r.className = "hover:bg-slate-50 group";
+                const eData = tData[emp.id] || {};
+                const tagInfo = db.tags.find(t=>t.id===emp.tagId);
+                const tagClick = (canCheck && !locked) ? `onclick="changeEmpTag('${emp.id}')"` : '';
+                
+                let html = `<td class="px-3 py-2 text-center border-r font-bold text-slate-600 sticky left-0 z-10 bg-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">${emp.no}</td><td class="px-2 py-2 text-center border-r"><div ${tagClick}>${getBadge(emp.tagId, 'tag')||'-'}</div></td><td class="px-3 py-2 border-r font-medium truncate">${emp.name}</td>`;
+                
+                club.times.forEach(t => {
+                    const rec = eData[t];
+                    let dHtml = ''; if(rec && rec.stId) dHtml = getBadge(rec.stId, 'status'); else if(tagInfo?.label === 'SL') dHtml = '<span class="auto-fill-text text-blue-500">SL</span>'; else if(tagInfo?.label === 'CR') dHtml = '<span class="auto-fill-text text-yellow-500">CR</span>';
+                    
+                    const cellAct = (canCheck && !locked) ? `onclick="toggleSt('${emp.id}', '${t}')" class="cell-check w-full h-full min-h-[36px] flex items-center justify-center rounded bg-slate-50 border border-transparent hover:border-slate-300"` : `class="w-full h-full min-h-[36px] flex items-center justify-center"`;
+                    const rmDot = (rec && rec.rm) ? `<div class="remark-indicator" onclick="readRm(event, '${emp.name}', '${t}', '${rec.rm}', '${emp.id}')"></div>` : '';
+                    const rmAdd = (!rec?.rm && canCheck && !locked) ? `<div class="absolute top-1 right-1 text-slate-300 opacity-0 group-hover:opacity-100 hover:text-indigo-500 cursor-pointer" onclick="readRm(event, '${emp.name}', '${t}', '', '${emp.id}')"><i class="fas fa-comment-dots text-[10px]"></i></div>` : '';
+                    html += `<td class="p-1 border-r text-center relative"><div ${cellAct}>${dHtml}</div>${rmDot}${rmAdd}</td>`;
+                });
+                r.innerHTML = html; body.appendChild(r);
+            });
+        }
+        function toggleSt(eId, t) {
+            if(!db.attendance[selDate]) db.attendance[selDate] = {}; if(!db.attendance[selDate][eId]) db.attendance[selDate][eId] = {};
+            const rec = db.attendance[selDate][eId][t] || {};
+            let cIdx = db.statuses.findIndex(s => s.id === rec.stId), nId = null;
+            if(cIdx === -1 && db.statuses.length > 0) nId = db.statuses[0].id; else if(cIdx > -1 && cIdx < db.statuses.length - 1) nId = db.statuses[cIdx + 1].id;
+            
+            // เช็คโควต้าลาสาย
+            if(nId && db.statuses.find(s=>s.id===nId).label === 'ส') {
+                const lateCount = Object.keys(db.attendance).reduce((acc, d) => acc + (db.attendance[d][eId] ? Object.values(db.attendance[d][eId]).filter(r=>r.stId===nId).length : 0), 0);
+                const limit = db.employees.find(e=>e.id===eId).lateLimit || 0;
+                if(lateCount >= limit) { Swal.fire({icon:'warning', title:'โควต้าลาสายเต็ม', text:`ลาสายไปแล้ว ${lateCount}/${limit} ครั้ง`, timer:1500}); nId = cIdx + 2 < db.statuses.length ? db.statuses[cIdx+2].id : null; }
+            }
+            if(nId) db.attendance[selDate][eId][t] = { stId: nId, rm: rec.rm||'', by: currentUser.name }; else if(rec.rm) db.attendance[selDate][eId][t].stId = null; else delete db.attendance[selDate][eId][t];
+            saveDB(); renderAtt();
+        }
+        function readRm(ev, eName, t, txt, eId) {
+            if(ev) ev.stopPropagation();
+            if(currentUser && !isTimeLocked()) {
+                const btnHTML = db.shortcuts.map(s => `<button onclick="document.getElementById('swal-input').value='${s}'" class="m-1 px-3 py-1 bg-slate-100 border rounded text-sm">${s}</button>`).join('');
+                Swal.fire({ title: `หมายเหตุ ${t}`, html: `<div class="text-xs text-slate-500 mb-2">${eName}</div><input id="swal-input" class="w-full border p-2 rounded outline-none mb-3" value="${txt}"> <div class="flex flex-wrap border-t pt-3">${btnHTML}</div>`, showCancelButton: true, preConfirm: () => document.getElementById('swal-input').value.trim() }).then(res => {
+                    if(res.isConfirmed) { if(!db.attendance[selDate]) db.attendance[selDate] = {}; if(!db.attendance[selDate][eId]) db.attendance[selDate][eId] = {}; if(!db.attendance[selDate][eId][t]) db.attendance[selDate][eId][t] = { stId: db.statuses[0]?.id, by: currentUser.name }; db.attendance[selDate][eId][t].rm = res.value; db.attendance[selDate][eId][t].by = currentUser.name; saveDB(); renderAtt(); }
+                });
+            } else { Swal.fire({ title: 'หมายเหตุ', html: `<p class="font-bold p-3 bg-slate-100 rounded">${txt}</p><p class="text-xs text-slate-400 mt-2">${eName} | ${t}</p>` }); }
+        }
+
+        // --- 2. Drinks ---
+        function renderDrinks() {
+            const head = document.getElementById('drinkHeader'), body = document.getElementById('drinkBody');
+            const club = db.clubs.find(c => c.id === currentClub); if(!club) return;
+            let h = `<tr><th class="px-3 py-3 w-12 text-center border-r bg-indigo-50">No.</th><th class="px-3 py-3 border-r bg-indigo-50 min-w-[120px]">พนักงาน</th>`;
+            club.times.forEach(t => { h += `<th class="px-1 py-3 text-center border-r min-w-[60px]">${t}</th>`; });
+            h += `<th class="px-3 py-3 text-center bg-indigo-100">รวมดื่ม</th></tr>`; head.innerHTML = h;
+
+            let emps = db.employees.filter(e => e.clubId === currentClub && db.tags.find(t=>t.id===e.tagId)?.label !== 'จบงาน').sort((a,b) => parseInt(a.no||0) - parseInt(b.no||0));
+            body.innerHTML = '';
+            const tData = db.drinks[selDate] || {};
+            const canCheck = currentUser && (currentUser.role === 'admin' || (currentUser.role === 'supervisor' && currentUser.permissions.drink));
+            const locked = isTimeLocked();
+
+            emps.forEach(emp => {
+                const r = document.createElement('tr'); r.className = "hover:bg-indigo-50/50";
+                const eData = tData[emp.id] || {}; let total = 0;
+                let html = `<td class="px-3 py-2 text-center border-r font-bold text-slate-600 sticky left-0 z-10 bg-white">${emp.no}</td><td class="px-3 py-2 border-r font-medium truncate">${emp.name}</td>`;
+                
+                club.times.forEach(t => {
+                    const d = eData[t]; if(d) total += parseInt(d.amount);
+                    const act = (canCheck && !locked) ? `onclick="openDrinkModal('${emp.id}', '${t}')" class="w-full h-full min-h-[36px] flex flex-col items-center justify-center cursor-pointer hover:bg-indigo-100 rounded ${d?'bg-indigo-50':''}"` : `class="w-full h-full min-h-[36px] flex flex-col items-center justify-center"`;
+                    const catTxt = d && d.category ? `<span class="text-[9px] text-slate-400 font-normal leading-none">${d.category.substring(0,6)}..</span>` : '';
+                    html += `<td class="p-1 border-r text-center"><div ${act}><span class="font-bold text-indigo-700">${d?d.amount:'-'}</span>${catTxt}</div></td>`;
+                });
+                html += `<td class="px-3 py-2 text-center font-bold text-indigo-600 bg-indigo-50/30">${total}</td>`;
+                r.innerHTML = html; body.appendChild(r);
+            });
+        }
+        function openDrinkModal(eId, t) {
+            if(isTimeLocked()) return Swal.fire('ล๊อคเวลา', 'หมดเวลาแก้ไขข้อมูลของเมื่อวานแล้ว', 'warning');
+            const emp = db.employees.find(e=>e.id===eId);
+            document.getElementById('dmEmpName').innerText = emp.name; document.getElementById('dmTime').innerText = t;
+            document.getElementById('dmEmpId').value = eId; document.getElementById('dmTimeVal').value = t;
+            
+            const cur = (db.drinks[selDate] && db.drinks[selDate][eId] && db.drinks[selDate][eId][t]) || null;
+            document.getElementById('dmAmount').value = cur ? cur.amount : '';
+            document.getElementById('dmCategory').innerHTML = db.drinkCategories.map(c=>`<option value="${c}">${c}</option>`).join('');
+            if(cur && cur.category) document.getElementById('dmCategory').value = cur.category;
+            document.getElementById('dmDetail').value = cur ? (cur.detail||'') : '';
+            openModal('drinkModal');
+        }
+        function saveDrink() {
+            const eId = document.getElementById('dmEmpId').value, t = document.getElementById('dmTimeVal').value, amt = parseInt(document.getElementById('dmAmount').value), cat = document.getElementById('dmCategory').value, det = document.getElementById('dmDetail').value;
+            if(!amt || amt<=0) return alert('ใส่จำนวนดื่มให้ถูกต้อง');
+            if(!db.drinks[selDate]) db.drinks[selDate] = {}; if(!db.drinks[selDate][eId]) db.drinks[selDate][eId] = {};
+            db.drinks[selDate][eId][t] = { amount: amt, category: cat, detail: det, by: currentUser.name };
+            saveDB(); closeModals(); renderDrinks();
+        }
+        function deleteDrink() {
+            const eId = document.getElementById('dmEmpId').value, t = document.getElementById('dmTimeVal').value;
+            if(db.drinks[selDate] && db.drinks[selDate][eId]) { delete db.drinks[selDate][eId][t]; saveDB(); closeModals(); renderDrinks(); }
+        }
+
+        // --- 3. Profile ---
+        function renderMyProfile() {
+            if(!currentUser || currentUser.role !== 'employee') return;
+            const emp = db.employees.find(e=>e.id===currentUser.id);
+            document.getElementById('myProfileNo').innerText = `รหัสพนักงาน: ${emp.no} | ร้าน: ${db.clubs.find(c=>c.id===emp.clubId)?.name}`;
+            document.getElementById('myProfileNick').value = emp.name; document.getElementById('myProfileFull').value = emp.fullName || ''; document.getElementById('myProfileBank').value = emp.bankAccount || '';
+            
+            const curYM = selDate.substring(0, 7), attB = document.getElementById('myAttHistory'), drkB = document.getElementById('myDrinkHistory');
+            attB.innerHTML = ''; drkB.innerHTML = '';
+            Object.keys(db.attendance).sort((a,b)=>b.localeCompare(a)).forEach(d => { if(d.startsWith(curYM) && db.attendance[d][emp.id]) { Object.keys(db.attendance[d][emp.id]).forEach(t => { const r = db.attendance[d][emp.id][t]; attB.innerHTML += `<tr><td class="px-4 py-2">${d}</td><td class="px-4 py-2 font-bold">${t}</td><td class="px-4 py-2">${getBadge(r.stId,'status')} ${r.rm?`<span class="text-xs text-slate-400">(${r.rm})</span>`:''}</td></tr>`; }); } });
+            Object.keys(db.drinks).sort((a,b)=>b.localeCompare(a)).forEach(d => { if(d.startsWith(curYM) && db.drinks[d][emp.id]) { Object.keys(db.drinks[d][emp.id]).forEach(t => { const r = db.drinks[d][emp.id][t]; drkB.innerHTML += `<tr><td class="px-4 py-2">${d} ${t}</td><td class="px-4 py-2 text-xs">${r.category} ${r.detail?`(${r.detail})`:''}</td><td class="px-4 py-2 text-center font-bold text-pink-600">${r.amount}</td></tr>`; }); } });
+        }
+        function saveMyProfile() {
+            const emp = db.employees.find(e=>e.id===currentUser.id);
+            emp.name = document.getElementById('myProfileNick').value.trim(); emp.fullName = document.getElementById('myProfileFull').value.trim(); emp.bankAccount = document.getElementById('myProfileBank').value.trim();
+            saveDB(); Swal.fire('สำเร็จ','อัปเดตข้อมูลส่วนตัวแล้ว','success');
+        }
+
+        // --- 4. Employees ---
+        function renderEmployees() {
+            const q = document.getElementById('searchEmp').value.toLowerCase(), box = document.getElementById('empListContainer'); box.innerHTML = '';
+            db.clubs.forEach(c => {
+                let emps = db.employees.filter(e => e.clubId === c.id && (q ? (e.name.toLowerCase().includes(q) || e.no.includes(q)) : db.tags.find(t=>t.id===e.tagId)?.label !== 'จบงาน'));
+                if(emps.length === 0) return;
+                let h = `<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"><div class="bg-slate-50 border-b px-5 py-3 font-bold text-slate-700">${c.name}</div><div class="overflow-x-auto"><table class="w-full text-left text-sm whitespace-nowrap"><thead class="bg-white text-slate-500 text-xs uppercase border-b"><tr><th class="px-4 py-3">No.</th><th class="px-3 py-3">Tag</th><th class="px-4 py-3">ชื่อ</th><th class="px-4 py-3">ระยะเวลาทำงาน</th><th class="px-4 py-3 text-right">จัดการ</th></tr></thead><tbody class="divide-y divide-slate-100">`;
+                emps.sort((a,b) => parseInt(a.no||0) - parseInt(b.no||0)).forEach(e => {
+                    const actHtml = (currentUser.role==='admin' || (currentUser.role==='supervisor' && currentUser.permissions.emp)) ? `<button onclick="editEmp('${e.id}')" class="text-indigo-500 bg-indigo-50 p-1.5 rounded mr-1"><i class="fas fa-edit"></i></button> ${currentUser.role==='admin' ? `<button onclick="delEmp('${e.id}')" class="text-red-500 bg-red-50 p-1.5 rounded"><i class="fas fa-trash"></i></button>`:''}` : '-';
+                    h += `<tr class="hover:bg-slate-50"><td class="px-4 py-2 font-bold">${e.no}</td><td class="px-3 py-2 cursor-pointer" onclick="changeEmpTag('${e.id}')">${getBadge(e.tagId,'tag')}</td><td class="px-4 py-2 font-medium">${e.name}</td><td class="px-4 py-2">${e.workStart?`${e.workStart} ถึง ${e.workEnd}`:'ไม่จำกัด'}</td><td class="px-4 py-2 text-right">${actHtml}</td></tr>`;
+                }); box.innerHTML += h + `</tbody></table></div></div>`;
+            });
+        }
+        function openEmpModal() { document.getElementById('empId').value=''; document.getElementById('empNo').value=''; document.getElementById('empName').value=''; document.getElementById('empStart').value=''; document.getElementById('empEnd').value=''; document.getElementById('empContractDays').value='0'; document.getElementById('empLateLimit').value='3'; document.getElementById('empClub').innerHTML = db.clubs.map(c=>`<option value="${c.id}">${c.name}</option>`).join(''); document.getElementById('empFormTitle').innerText='เพิ่มพนักงาน'; openModal('empFormModal'); }
+        function editEmp(id) { const e = db.employees.find(x=>x.id===id); document.getElementById('empId').value=e.id; document.getElementById('empNo').value=e.no; document.getElementById('empName').value=e.name; document.getElementById('empClub').innerHTML = db.clubs.map(c=>`<option value="${c.id}">${c.name}</option>`).join(''); document.getElementById('empClub').value=e.clubId; document.getElementById('empStart').value=e.workStart; document.getElementById('empEnd').value=e.workEnd; document.getElementById('empContractDays').value=e.contractDays||'0'; document.getElementById('empLateLimit').value=e.lateLimit||'3'; document.getElementById('empFormTitle').innerText='แก้ไขพนักงาน'; openModal('empFormModal'); }
+        function calcEndDate() { const d = parseInt(document.getElementById('empContractDays').value), s = document.getElementById('empStart').value; if(d>0 && s) { const date = new Date(s); date.setDate(date.getDate()+d-1); document.getElementById('empEnd').value = date.toISOString().split('T')[0]; } else document.getElementById('empEnd').value = ''; }
+        function saveEmp() { const id = document.getElementById('empId').value, no = document.getElementById('empNo').value.trim(), name = document.getElementById('empName').value.trim(); if(!no||!name) return alert("กรอกข้อมูลให้ครบ"); const data = { id: id||'e'+Date.now(), no, name, fullName: id?db.employees.find(e=>e.id===id).fullName:'', bankAccount: id?db.employees.find(e=>e.id===id).bankAccount:'', clubId: document.getElementById('empClub').value, tagId: id?db.employees.find(e=>e.id===id).tagId:db.tags[0].id, workStart: document.getElementById('empStart').value, workEnd: document.getElementById('empEnd').value, contractDays: parseInt(document.getElementById('empContractDays').value), lateLimit: parseInt(document.getElementById('empLateLimit').value) }; if(id) db.employees[db.employees.findIndex(e=>e.id===id)]=data; else db.employees.push(data); saveDB(); closeModals(); renderEmployees(); }
+        function changeEmpTag(empId) { if(!(currentUser.role==='admin' || (currentUser.role==='supervisor' && currentUser.permissions.emp))) return; Swal.fire({ title: 'เลือก Tag', html: db.tags.map(t => `<button onclick="Swal.close(); db.employees.find(e=>e.id==='${empId}').tagId='${t.id}'; saveDB(); renderEmployees();" class="custom-badge m-1 px-4 py-2 hover:scale-110" style="background:${t.bg}; color:${t.text}">${t.label}</button>`).join(''), showConfirmButton: false }); }
+        
+        // --- ลบพนักงาน (โยงกับระบบการเงิน & ประวัติ) ---
+        function delEmp(id) {
+            Swal.fire({title:'ยืนยันลบพนักงาน?', icon:'warning', showCancelButton:true, confirmButtonColor:'#ef4444'}).then(r => {
+                if(r.isConfirmed) {
+                    const emp = db.employees.find(e=>e.id===id);
+                    // คำนวณยอดเงินคงเหลือ
+                    const bal = db.finance.filter(f=>f.empId===id).reduce((sum, tx) => sum + (tx.type==='advance' ? tx.amount : -tx.amount), 0);
+                    if(bal > 0) db.badDebts.push({ empName: emp.name, empNo: emp.no, amount: bal, dateDeleted: new Date().toISOString() });
+                    // บันทึกประวัติลบ
+                    db.deletedEmployees.push({ empNo: emp.no, empName: emp.name, deleteDate: new Date().toISOString(), by: currentUser.name });
+                    // ลบจริง
+                    db.employees = db.employees.filter(e=>e.id!==id); saveDB(); renderEmployees();
+                }
+            });
+        }
+
+        // --- 5. Finance (Admin Only) ---
+        function getEmpBalance(empId) { return db.finance.filter(f=>f.empId===empId).reduce((sum, tx) => sum + (tx.type==='advance' ? tx.amount : -tx.amount), 0); }
+        function renderFinanceList() {
+            const q = document.getElementById('searchFin').value.toLowerCase(), list = document.getElementById('finEmpList'); list.innerHTML = '';
+            let totalDebt = 0;
+            db.employees.filter(e=>q?e.name.toLowerCase().includes(q)||e.no.includes(q):true).sort((a,b)=>parseInt(a.no||0)-parseInt(b.no||0)).forEach(e => {
+                const bal = getEmpBalance(e.id); totalDebt += bal;
+                list.innerHTML += `<div onclick="selectFinEmp('${e.id}')" class="p-3 border rounded-lg cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 flex justify-between items-center ${selFinEmpId===e.id?'border-indigo-500 bg-indigo-50':''}"><div class="font-bold text-slate-700">${e.no} ${e.name}</div><div class="font-bold ${bal>0?'text-red-500':'text-green-500'}">${bal} ฿</div></div>`;
+            });
+            document.getElementById('finTotalDebt').innerText = totalDebt + " ฿";
+            const totalBadDebt = db.badDebts.reduce((sum, b)=>sum+b.amount, 0);
+            document.getElementById('finBadDebt').innerText = totalBadDebt + " ฿";
+            
+            // Render Bad Debt Table
+            document.getElementById('finBadDebtBody').innerHTML = db.badDebts.map(b=>`<tr><td class="px-4 py-2">${b.dateDeleted.split('T')[0]}</td><td class="px-4 py-2">${b.empNo} ${b.empName}</td><td class="px-4 py-2 font-bold text-red-500">${b.amount}</td></tr>`).join('');
+            if(selFinEmpId) selectFinEmp(selFinEmpId);
+        }
+        function selectFinEmp(id) {
+            selFinEmpId = id; const emp = db.employees.find(e=>e.id===id); if(!emp) return;
+            document.getElementById('finSelName').innerText = `${emp.no} ${emp.name} (${emp.fullName||'ไม่มีชื่อจริง'})`;
+            document.getElementById('finSelBank').innerText = emp.bankAccount ? `ธนาคาร: ${emp.bankAccount}` : 'ยังไม่ระบุเลขบัญชี';
+            document.getElementById('finSelBal').innerText = getEmpBalance(id) + " ฿";
+            document.getElementById('btnFinAdv').disabled = false; document.getElementById('btnFinAdv').classList.remove('opacity-50');
+            document.getElementById('btnFinPay').disabled = false; document.getElementById('btnFinPay').classList.remove('opacity-50');
+            
+            const tbody = document.getElementById('finTxBody'); tbody.innerHTML = '';
+            db.finance.filter(f=>f.empId===id).sort((a,b)=>b.id.localeCompare(a.id)).forEach(tx => {
+                const tClass = tx.type==='advance' ? 'text-red-500 bg-red-50' : 'text-green-500 bg-green-50';
+                const tLbl = tx.type==='advance' ? 'เบิกเงิน' : 'จ่ายคืน/หัก';
+                tbody.innerHTML += `<tr><td class="px-4 py-2 text-xs">${new Date(parseInt(tx.id)).toLocaleString('th-TH')}</td><td class="px-4 py-2"><span class="${tClass} px-2 py-0.5 rounded text-xs font-bold">${tLbl}</span></td><td class="px-4 py-2 font-bold">${tx.amount}</td><td class="px-4 py-2 text-xs">${tx.reason||'-'}</td><td class="px-4 py-2 text-xs">${tx.by}</td></tr>`;
+            });
+            // Update List Highlight
+            Array.from(document.getElementById('finEmpList').children).forEach(el=>el.classList.remove('border-indigo-500','bg-indigo-50'));
+            // Very hacky but works for small list
+            renderFinanceList(); 
+        }
+        function switchFinTab(tab) {
+            if(tab==='ledger') { document.getElementById('finLedgerArea').classList.replace('hidden','flex'); document.getElementById('finBadDebtArea').classList.replace('flex','hidden'); document.getElementById('tabFinLedger').className="flex-1 py-3 text-indigo-600 border-b-2 border-indigo-600 bg-white"; document.getElementById('tabFinBadDebt').className="flex-1 py-3 text-slate-500 border-b-2 border-transparent hover:bg-slate-100"; }
+            else { document.getElementById('finBadDebtArea').classList.replace('hidden','flex'); document.getElementById('finLedgerArea').classList.replace('flex','hidden'); document.getElementById('tabFinBadDebt').className="flex-1 py-3 text-indigo-600 border-b-2 border-indigo-600 bg-white"; document.getElementById('tabFinLedger').className="flex-1 py-3 text-slate-500 border-b-2 border-transparent hover:bg-slate-100"; }
+        }
+        function openFinTxModal(type) {
+            document.getElementById('finTxType').value = type; document.getElementById('finTxEmpName').innerText = db.employees.find(e=>e.id===selFinEmpId).name;
+            document.getElementById('finTxAmt').value = ''; document.getElementById('finTxReason').value = '';
+            document.getElementById('finTxHead').className = type==='advance' ? "px-5 py-4 border-b flex justify-between items-center bg-red-500" : "px-5 py-4 border-b flex justify-between items-center bg-green-500";
+            document.getElementById('finTxTitle').innerText = type==='advance' ? "บันทึกเบิกเงิน" : "บันทึกจ่ายคืน / หักเงิน";
+            openModal('finTxModal');
+        }
+        function saveFinTx() {
+            const amt = parseFloat(document.getElementById('finTxAmt').value), reason = document.getElementById('finTxReason').value, type = document.getElementById('finTxType').value;
+            if(!amt || amt <= 0) return alert('กรอกจำนวนเงินให้ถูกต้อง');
+            db.finance.push({ id: Date.now().toString(), date: new Date().toISOString().split('T')[0], empId: selFinEmpId, amount: amt, type: type, reason: reason, by: currentUser.name });
+            saveDB(); closeModals(); renderFinanceList();
+        }
+
+        // --- 6. Deleted History ---
+        function renderDeletedHistory() {
+            const q = document.getElementById('searchDelHist').value.toLowerCase();
+            const tbody = document.getElementById('delHistBody'); tbody.innerHTML = '';
+            db.deletedEmployees.filter(h=>q?h.empName.toLowerCase().includes(q)||h.empNo.includes(q):true).sort((a,b)=>b.deleteDate.localeCompare(a.deleteDate)).forEach(h => {
+                tbody.innerHTML += `<tr><td class="px-4 py-2">${new Date(h.deleteDate).toLocaleString('th-TH')}</td><td class="px-4 py-2 font-bold">${h.empNo}</td><td class="px-4 py-2">${h.empName}</td><td class="px-4 py-2 text-xs text-slate-500">${h.by}</td></tr>`;
+            });
+        }
+
+        // --- 7. Dashboard ---
+        function initDash() { document.getElementById('lbClubFilter').innerHTML = '<option value="all">ทุกคลับ</option>' + db.clubs.map(c=>`<option value="${c.id}">${c.name}</option>`).join(''); }
+        function renderDashboard() {
+            const todayD = selDate; let actEmps = db.employees.filter(e => db.tags.find(t=>t.id===e.tagId)?.label !== 'จบงาน');
+            let workToday=0, crToday=0, startToday=0, finishToday=0; const stCR = db.tags.find(t=>t.label==='CR')?.id;
+            actEmps.forEach(e => {
+                if(e.workStart === todayD) startToday++; if(e.workEnd === todayD) finishToday++; if(e.tagId === stCR) crToday++;
+                if(db.attendance[todayD] && db.attendance[todayD][e.id]) { const recs = Object.values(db.attendance[todayD][e.id]); if(recs.some(r => r.stId && db.statuses.find(s=>s.id===r.stId).label !== 'X')) workToday++; }
+            });
+            document.getElementById('dashSummaryCards').innerHTML = `
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200"><div class="text-[10px] font-bold text-slate-500 uppercase mb-1">พนักงานทั้งหมด</div><div class="text-2xl font-bold">${actEmps.length}</div></div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200"><div class="text-[10px] font-bold text-slate-500 uppercase mb-1">ทำงานวันนี้</div><div class="text-2xl font-bold text-green-600">${workToday}</div></div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200"><div class="text-[10px] font-bold text-slate-500 uppercase mb-1">พนักงาน CR</div><div class="text-2xl font-bold text-yellow-600">${crToday}</div></div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200"><div class="text-[10px] font-bold text-slate-500 uppercase mb-1">เริ่มงานวันนี้</div><div class="text-2xl font-bold text-blue-600">${startToday}</div></div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200"><div class="text-[10px] font-bold text-slate-500 uppercase mb-1">จบงานวันนี้</div><div class="text-2xl font-bold text-red-500">${finishToday}</div></div>
+            `;
+            let tCounts = {}; db.tags.forEach(t=>tCounts[t.id]=0); actEmps.forEach(e=>tCounts[e.tagId]++);
+            document.getElementById('dashTagsBreakdown').innerHTML = db.tags.filter(t=>t.label!=='จบงาน').map(t=>`<div><div class="flex justify-between text-xs font-bold mb-1"><span style="color:${t.bg}">${t.label}</span><span>${tCounts[t.id]} คน</span></div><div class="w-full bg-slate-100 rounded-full h-1.5"><div class="h-1.5 rounded-full" style="width:${actEmps.length>0?(tCounts[t.id]/actEmps.length)*100:0}%; background-color:${t.bg}"></div></div></div>`).join('');
+        }
+        function renderLeaderboard() {
+            const type = document.getElementById('lbType').value, cFilt = document.getElementById('lbClubFilter').value;
+            let stats = {}; db.employees.forEach(e => { if(db.tags.find(t=>t.id===e.tagId)?.label!=='จบงาน' && (cFilt==='all'||e.clubId===cFilt)) stats[e.id] = { name: e.name, no: e.no, club: db.clubs.find(c=>c.id===e.clubId)?.name, val: 0 }; });
+            const curYM = selDate.substring(0, 7);
+            if(type === 'drinks') { Object.keys(db.drinks).forEach(d => { if(d.startsWith(curYM)) Object.keys(db.drinks[d]).forEach(eId => { if(stats[eId]) Object.values(db.drinks[d][eId]).forEach(amt => stats[eId].val += parseInt(amt.amount||0)); }); }); }
+            else {
+                let tSt = type==='work'?'/':(type==='absent'?'X':'');
+                Object.keys(db.attendance).forEach(d => { if(d.startsWith(curYM)) Object.keys(db.attendance[d]).forEach(eId => { if(stats[eId]) { const recs = Object.values(db.attendance[d][eId]); if(type==='cr') { if(db.tags.find(t=>t.id===db.employees.find(e=>e.id===eId).tagId)?.label==='CR' && recs.some(r=>r.stId && db.statuses.find(s=>s.id===r.stId).label!=='X')) stats[eId].val++; } else { const tId = db.statuses.find(s=>s.label===tSt)?.id; recs.forEach(r => { if(r.stId===tId) stats[eId].val++; }); } } }); });
+            }
+            const tbody = document.getElementById('dashLeaderboard'); tbody.innerHTML = '';
+            Object.values(stats).sort((a,b)=>b.val-a.val).slice(0, 50).forEach((s, idx) => { if(s.val===0) return; let rc = idx===0?"bg-yellow-100 text-yellow-600":(idx===1?"bg-slate-200 text-slate-700":(idx===2?"bg-orange-100 text-orange-700":"bg-slate-100 text-slate-600")); tbody.innerHTML += `<tr class="hover:bg-slate-50"><td class="px-4 py-2"><span class="w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold ${rc}">${idx+1}</span></td><td class="px-4 py-2 font-bold">${s.no} ${s.name}</td><td class="px-4 py-2 text-xs text-slate-500">${s.club}</td><td class="px-4 py-2 text-center font-bold text-indigo-600">${s.val}</td></tr>`; });
+        }
+
+        // --- 8. Settings ---
+        function renderSettings() {
+            document.getElementById('setAutoAbsent').value = db.settings.autoAbsentTime || "10:00";
+            document.getElementById('setClubList').innerHTML = db.clubs.map(c => `<div class="bg-slate-50 border rounded-lg p-2 text-sm"><div class="font-bold text-indigo-700 mb-1 flex justify-between">${c.name} <i onclick="if(confirm('ลบ?')) {db.clubs=db.clubs.filter(x=>x.id!=='${c.id}'); saveDB(); renderSettings();}" class="fas fa-trash text-red-400 cursor-pointer"></i></div><div class="flex flex-wrap gap-1">${c.times.map((t,i)=>`<span class="bg-white border rounded px-1.5 py-0.5 text-xs">${t} <i onclick="db.clubs.find(x=>x.id==='${c.id}').times.splice(${i},1); saveDB(); renderSettings();" class="fas fa-times text-red-500 cursor-pointer"></i></span>`).join('')} <button onclick="let v=prompt('เพิ่มเวลา HH:MM'); if(v){db.clubs.find(x=>x.id==='${c.id}').times.push(v); db.clubs.find(x=>x.id==='${c.id}').times.sort(); saveDB(); renderSettings();}" class="text-[10px] bg-indigo-100 text-indigo-700 px-1 rounded">+ เวลา</button></div></div>`).join('');
+            document.getElementById('setDrinkCatList').innerHTML = db.drinkCategories.map((c, i) => `<span class="bg-slate-100 border px-3 py-1 rounded-full text-sm">${c} <i onclick="db.drinkCategories.splice(${i},1); saveDB(); renderSettings();" class="fas fa-times ml-1 text-red-500 cursor-pointer"></i></span>`).join('');
+            
+            // Admins
+            document.getElementById('setAdminList').innerHTML = db.users.filter(u=>u.role==='admin').map(u=>`<tr class="hover:bg-red-50"><td class="py-2"><span class="bg-red-100 text-red-800 px-2 rounded font-mono text-xs">${u.id}</span></td><td class="py-2 font-bold">${u.name} ${u.isMainAdmin?'<span class="text-[10px] bg-red-500 text-white px-1 rounded">หลัก</span>':''}</td><td class="py-2 text-right">${u.isMainAdmin?'':`<i onclick="if(confirm('ลบ Admin?')){db.users=db.users.filter(x=>x.id!=='${u.id}'); saveDB(); renderSettings();}" class="fas fa-trash text-red-500 cursor-pointer"></i>`}</td></tr>`).join('');
+            
+            // Sups
+            document.getElementById('setSupClubCheckboxes').innerHTML = `<label class="flex items-center"><input type="checkbox" value="all" class="sup-club-cb mr-1"> ทุกคลับ</label>` + db.clubs.map(c=>`<label class="flex items-center"><input type="checkbox" value="${c.id}" class="sup-club-cb mr-1"> ${c.name}</label>`).join('');
+            document.getElementById('setSupList').innerHTML = db.users.filter(u=>u.role==='supervisor').map(u => `<tr class="hover:bg-slate-50"><td class="py-2"><span class="bg-slate-200 px-2 rounded font-mono text-xs">${u.id}</span></td><td class="py-2">${u.name}</td><td class="py-2 text-xs text-slate-500">${u.clubs.includes('all')?'ทั้งหมด':u.clubs.map(cid=>db.clubs.find(c=>c.id===cid)?.name).join(', ')}</td><td class="py-2 text-right"><i onclick="if(confirm('ลบหัวหน้า?')){db.users=db.users.filter(x=>x.id!=='${u.id}'); saveDB(); renderSettings();}" class="fas fa-trash text-red-500 cursor-pointer"></i></td></tr>`).join('');
+        }
+        function saveAutoAbsent() { db.settings.autoAbsentTime = document.getElementById('setAutoAbsent').value; saveDB(); alert('บันทึกเวลาตัดจบ'); }
+        function addClub() { const n = document.getElementById('setClubName').value.trim(); if(n){ db.clubs.push({id:'c'+Date.now(), name:n, times:[]}); saveDB(); renderSettings(); document.getElementById('setClubName').value=''; } }
+        function addDrinkCat() { const n = document.getElementById('setDrinkCatName').value.trim(); if(n){ db.drinkCategories.push(n); saveDB(); renderSettings(); document.getElementById('setDrinkCatName').value=''; } }
+        function addAdmin() {
+            const n = document.getElementById('setAdminName').value.trim(), p = document.getElementById('setAdminPin').value.trim();
+            if(p.length!==6 || isNaN(p) || !n) return alert("PIN ต้องเป็นเลข 6 หลัก"); if(db.users.find(u=>u.id===p)) return alert("PIN ซ้ำ");
+            db.users.push({ id: p, name: n, role: 'admin' }); saveDB(); renderSettings(); document.getElementById('setAdminName').value=''; document.getElementById('setAdminPin').value='';
+        }
+        function addSup() {
+            const n = document.getElementById('setSupName').value.trim(), p = document.getElementById('setSupPin').value.trim();
+            if(p.length!==6 || isNaN(p) || !n) return alert("PIN ต้องเป็นเลข 6 หลัก"); if(db.users.find(u=>u.id===p)) return alert("PIN ซ้ำ");
+            let clubs = Array.from(document.querySelectorAll('.sup-club-cb:checked')).map(cb=>cb.value); if(clubs.length===0) return alert("เลือกร้านอย่างน้อย 1 ร้าน");
+            if(clubs.includes('all')) clubs = ['all'];
+            const perms = { att: document.getElementById('permAtt').checked, drink: document.getElementById('permDrink').checked, emp: document.getElementById('permEmp').checked, dash: document.getElementById('permDash').checked };
+            db.users.push({ id: p, name: n, role: 'supervisor', clubs: clubs, permissions: perms }); saveDB(); renderSettings();
+        }
+
+        function openModal(id) { document.getElementById('modalOverlay').classList.remove('hidden'); document.querySelectorAll('.modal-content').forEach(el=>el.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+        function closeModals() { document.getElementById('modalOverlay').classList.add('hidden'); pin=''; }
+        window.onload = init;
     </script>
 </body>
 </html>
